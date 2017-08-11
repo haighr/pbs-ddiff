@@ -1,0 +1,4 @@
+Sensitivity Groups
+------------------
+
+Press the button <Update SG> to populate the SG column from the cribtab.

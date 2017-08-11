@@ -1,0 +1,681 @@
+\documentclass[11pt]{book}   
+\usepackage{resDocSty}      % Res Doc .sty file (from AME)
+
+% Packages
+\usepackage{color}
+\definecolor{red}{rgb}{1,0,0}
+\definecolor{blue}{rgb}{0,0,1}
+\definecolor{notecol}{rgb}{0.4156863,0.3529412,0.8039216}
+\newcommand{\red}[1]{{\textcolor{red} {#1}}}
+\newcommand{\blue}[1]{{\textcolor{blue} {#1}}}
+\newcommand{\notecol}[1]{{\textcolor{notecol} {#1}}}
+
+\usepackage{enumitem}
+\parskip 0pt                  % To increase white space between
+
+\makeatletter    % Need this and \makeatother around these (AME).
+
+\renewcommand{\section}{\@startsection{section}{1}{0mm}% % name, level, indent
+{-18pt \@plus -0pt \@minus -0pt}{6pt \@plus 0pt}%        % beforeskip afterskip
+{\normalfont\large\bfseries\color{blue}\MakeUppercase}}%             % style
+
+\renewcommand{\subsection}{\@startsection%
+{subsection}{2}{0mm}%                                   % name, level, indent
+{-6pt \@plus -0pt \@minus -0pt}{1pt \@plus 0pt}%       % beforeskip afterskip
+{\normalfont\bf\MakeUppercase}}%                        % style
+
+\renewcommand{\subsubsection}{\@startsection%
+{subsubsection}{3}{0mm}%                                % name, level, indent
+{6pt \@plus -0pt \@minus -0pt}{2pt \@plus 0pt}%       % beforeskip afterskip
+{\normalfont\bf}}% To leave out underlining (but that would break the rules)(RH: no longer)
+
+\makeatother                  % Need this after the renewcommands
+
+\newcommand\call[1]{
+\footnotesize\selectfont\hangindent=0.35in
+Call:~~\red{#1}
+\normalsize\selectfont}
+
+\newcommand\note[1]{
+\footnotesize\selectfont\hangindent=0.35in
+Note:~~\notecol{#1}
+\normalsize\selectfont}
+
+%===========================================================
+\begin{document}
+
+
+\newcommand{\LH}{History of WAP runs}  % Set to {} for final ResDoc
+\newcommand{\RH}{CSAP WP2013GF03}
+\newcommand{\LF}{Walleye Pollock}
+\newcommand{\RF}{\emph{Theragra chalcogramma}}
+
+\lhead{\LH}\rhead{\RH}\lfoot{\LF}\rfoot{\RF}
+
+\section*{History of Runs -- WAP North (5CDE)}
+
+\subsection*{Indices}
+\begin{enumerate}[nosep]
+  \item GB Reed (GIG Historical)
+  \item HS Multispecies
+  \item HS Synoptic
+  \item WCHG Synoptic
+  \item North CPUE
+\end{enumerate}
+
+\subsection*{Runs (North)}
+
+\smallskip
+
+\blue{[24 March 2017]}\\
+Created a new Run Set for the North stock definition (=5CDE).
+Rowan supplied revised catch series with the North and South catches separated.
+I have chosen to include the Hecate St multispecies, Hecate St synoptic and WCHG synoptic surveys in the data for this stock definition.
+I made an executive decision to include the QC Sound GB Reed survey in these runs because I think they will be needed to start the model back in 1967.
+Finally, I have used the 5CDE combined index for the CPUE.
+
+\blue{[28 March 2017]}\\
+The first set of MCMC runs were run for 10,300,000 MCMC draws, saving every 10,000 for a posterior sample of 1030 (3\% burn-in).
+This run had terrible MCMC diagnostics and clearly had not converged.
+Nassess01 was repeated with 13,000,000 MCMC draws (a 30\% burnin), with much better MCMC success.
+Nassess02 and Nassess03 were run on the same basis.
+
+\blue{[29 March 2017]}\\
+Note: I have not yet adjusted the alpha, rho and mean wgt at recruitment for these runs.
+The values in the .dat files are from the coastwide stock assessment.
+The North stock assessment will use the same growth function but needs the specific L-W parameters for the North stock.
+These are very similar to the coastwide stock so the Walford plot parameters will change very little.
+
+\blue{[30 March 2017]}\\
+Amended note: I updated the Walford parameters and the mean weight at kage using North specific length-weight parameters.\\[6pt]
+
+Nassess01: this run will duplicate as best we can the run assess15 which was our ``base case'' in the previous Outside (entire outside coast from 3CD to 5CDE, including Areas 12 and 20).
+
+\subsubsection*{Nassess01}
+\begin{enumerate}[nosep]
+  \item M fixed~=~0.30
+  \item knife-edge recruitment at age~=~3
+  \item 1973-2016 standardised unsorted mean weights
+  \item Brody parameters: alpha\_g~= 0.3475, rho\_g~=0.8668, wk~= 0.4929
+  \item growth parameters: Linf~= 66.9436, k~= 0.211778, to~= -1.13642
+  \item length-weight allometry: a~= 7.1018E-06, b~= 3.0415 (DD: used only to derive Brody)
+  \item variance to sig (observation error)=0.2 \& sigmaR (tau/process error)=0.6
+  \item uniform priors on q: -10 to 0
+  \item mean weight sig~=~0.15
+  \item catch series v4: 2016-09-12
+  \item h beta prior (mean=0.7~/~SD=0.15)
+  \item fix ln(Rbar) \& ln(Rinit)
+  \item equilibrium start in 1967 (use all of GB Reed, including 1995)
+  \item WAP CPUE indices (uniform -10 to 0)
+  \item version iscam-delaydiff.exe: ln(R0)=ln(Rbar)
+  \item estimate ln(R0) (uniform)
+  \item equal-weight for each age class when estimating von-B, interpolated by sex (Linf=67 cm)
+\end{enumerate}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 30000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess02 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.35
+  \item kage~=~3
+\end{itemize}
+\call{iscamdelaydiff -mcmc 13000000 -mcsave 10000 -mcscale 3000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess03 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~3
+  \item drop GB~Reed historic survey
+\end{itemize}
+\call{iscamdelaydiff -mcmc 25000000 -mcsave 10000 -mcscale 5000000 -maxfn 3000 -delaydiff}\\
+\note{Longer MCMC chain (25~M) -- PJS forgot to change the -mcsave 10000 to -mcsave 20000. The 2500 draws were thinned by 1/2 and the -mceval stage was re-run.}
+
+\subsubsection*{Nassess04 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~4
+\end{itemize}
+\call{iscamdelaydiff -mcmc 25000000 -mcsave 10000 -mcscale 5000000 -maxfn 3000 -delaydiff}\\
+\note{Longer MCMC chain (25~M) and thinned by half (see Nassess03)}
+
+\subsubsection*{Nassess05 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~4
+  \item drop GB~Reed historic survey
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 30000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess06 -- same as Nassess05 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~4
+  \item drop GB~Reed historic survey
+  \item drop CPUE index time series
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess07 -- same as Nassess05 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.25
+  \item kage~=~4
+  \item drop GB~Reed historic survey
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess08 -- same as Nassess03 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~3
+  \item drop GB~Reed historic survey
+  \item drop CPUE index time series
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess09 -- same as Nassess03 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.25
+  \item kage~=~3
+  \item drop GB~Reed historic survey
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess10 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.35
+  \item kage~=~4
+  \item drop GB~Reed historic survey
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess11 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.35
+  \item kage~=~3
+  \item drop GB~Reed historic survey
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess12 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.35
+  \item kage~=~4
+  \item keep GB~Reed historic survey
+\end{itemize}
+\call{cmd line: iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Nassess13 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.25
+  \item kage~=~5
+  \item drop GB~Reed historic survey
+\end{itemize}
+
+\subsubsection*{Nassess14 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~5
+  \item drop GB~Reed historic survey
+\end{itemize}
+
+\subsubsection*{Nassess15 -- same as Nassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.35
+  \item kage~=~5
+  \item drop GB~Reed historic survey
+\end{itemize}
+
+
+%%==============================================================================
+\clearpage
+\section*{History of Runs -- WAP South (5AB3CD)}
+
+\subsection*{Indices}
+\begin{enumerate}[nosep]
+  \item GB Reed (GIG Historical)
+  \item WCVI Synoptic
+  \item QCS Synoptic
+  \item South CPUE
+\end{enumerate}
+
+\subsection*{Runs (South)}
+
+\smallskip
+
+\blue{[04 April 2017]}\\
+Created a new Run Set for the South stock definition (=3CD5AB+Minor Areas 12 \& 20).
+Rowan supplied revised catch series with the North and South catches separated.
+I have chosen to include the GB Reed historic survey, the QC Sound synoptic survey and the WCSI synoptic survey in the data for this stock definition (as well as the South CPUE series).\\[6pt]
+
+The Walford parameters and the mean weight at kage are estimated using South specific length-weight parameters.\\[6pt]
+
+Sassess01: this run is not useful because it used the North vonB growth function, as well as North length-weight parameters
+
+
+\subsubsection*{Sassess01}
+\begin{enumerate}[nosep]
+  \item M fixed~=~0.30
+  \item knife-edge recruitment at age~=~3
+  \item 1973-2016 standardised unsorted mean weights
+  \item Brody parameters: alpha\_g~= 0.343781, rho\_g~=0.866573, wk~= 0.489858
+  \item growth parameters: Linf~= 66.9436, k~= 0.211778, to~= -1.13642
+  \item length-weight allometry: a~= 7.3536E-06, b~= 3.030278  (DD: used only to derive Brody)
+  \item variance to sig (observation error)=0.2 \& sigmaR (tau/process error)=0.6
+  \item uniform priors on q: -10 to 0
+  \item mean weight sig~=~0.15
+  \item catch series v4: 2016-09-12
+  \item h beta prior (mean=0.7~/~SD=0.15)
+  \item fix ln(Rbar) \& ln(Rinit)
+  \item equilibrium start in 1967 (use all of GB Reed, including 1995)
+  \item WAP CPUE indices (uniform -10 to 0)
+  \item version iscam-delaydiff.exe: ln(R0)=ln(Rbar)
+  \item estimate ln(R0) (uniform)
+  \item equal-weight for each age class when estimating von-B, interpolated by sex (Linf=67 cm)
+  \item North vonB and length-weight parameters
+\end{enumerate}
+\call{iscamdelaydiff -mcmc 13000000 -mcsave 10000 -mcscale 3000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess02 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~3
+  \item used 3CD growth function from \citet{Saunders-etal:1989}
+  \item Brody parameters: alpha\_g~= 0.27588, rho\_g~= 0.78438, wk~= 0.44324
+  \item growth parameters: Linf~= 53.4993, k~= 0.3090, to~= -0.9676
+\end{itemize}
+\call{iscamdelaydiff -mcmc 25000000 -mcsave 10000 -mcscale 5000000 -maxfn 3000 -delaydiff}\\
+\note{Longer MCMC chain (25~M) and thinned by half (see Nassess03)}
+
+\subsubsection*{Sassess03 -- same as Sassess02 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~4
+  \item used 3CD growth function from \citet{Saunders-etal:1989}
+  \item Brody parameters: alpha\_g~= 0.29231, rho\_g~= 0.77078, wk~= 0.60881
+\end{itemize}
+\call{no MCMC runs}
+
+\subsubsection*{Sassess04 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~3
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+  \item Brody parameters: alpha\_g~= 0.14441, rho\_g~= 0.87063, wk~= 0.24875
+  \item growth parameters: Linf~= 50.82725, k~= 0.199054, to~= -1.78968
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 30000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess05 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~4
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+  \item Brody parameters: alpha\_g~= 0.15339, rho\_g~= 0.86144, wk~= 0.34426
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 30000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess06 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~3
+  \item used 4B (SG) growth function from \citet{Saunders-etal:1989}
+  \item Brody parameters: alpha\_g~= 0.4141, rho\_g~= 0.4304, wk~= 0.5088
+  \item growth parameters: Linf~= 44.498, k~= 0.9051, to~= 0.5717
+\end{itemize}
+\call{no MCMC runs}
+
+\subsubsection*{Sassess07 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~4
+  \item used 4B (SG) growth function from \citet{Saunders-etal:1989}
+  \item Brody parameters: alpha\_g~= 0.4254, rho\_g~= 0.4147, wk~= 0.6324
+\end{itemize}
+\call{no MCMC runs}
+
+\subsubsection*{Sassess08 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~4
+  \item drop CPUE index time series
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess09 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.25
+  \item kage~=~4
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess10 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~=~0.30
+  \item kage~=~3
+  \item drop CPUE index time series
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess11 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.25
+  \item kage~=~3
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess12 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item kage~=~3
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess13 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item kage~=~4
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess14 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.25
+  \item kage~=~5
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess15 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.30
+  \item kage~=~5
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+\subsubsection*{Sassess16 -- same as Sassess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item kage~=~5
+  \item used Okhotsk Sea growth function from \citet{Janusz-Horbowy:1997}
+\end{itemize}
+\call{iscamdelaydiff -mcmc 30000000 -mcsave 20000 -mcscale 10000000 -maxfn 3000 -delaydiff}
+
+
+%%==============================================================================
+\clearpage
+\section*{History of Runs -- WAP Coastwide (5CDE+5AB3CD)}
+
+\blue{[17-18 December 2016]}
+
+\subsection*{Indices}
+\begin{enumerate}[nosep]
+  \item GB Reed (GIG Historical)
+  \item HS Multispecies
+  \item HS Synoptic
+  \item WCHG Synoptic
+  \item WCVI Synoptic
+  \item QCS Synoptic
+  \item Bottom Trawl CPUE
+\end{enumerate}
+
+\subsection*{Runs (Coastwide)}
+
+\subsubsection*{assess01}
+\begin{enumerate}[nosep]
+  \item M fixed~=~0.30
+  \item knife-edge recruitment at age~=~3
+  \item Arithmetic mean weights
+  %\item Brody parameters: alpha\_g~= 0.3475, rho\_g~=0.8668, wk~= 0.4929
+  %\item growth parameters: Linf~= 66.9436, k~= 0.211778, to~= -1.13642
+  %\item length-weight allometry: a~= 7.1018E-06, b~= 3.0415 (DD: used only to derive Brody)
+  \item variance to sig (observation error)~= 0.2 \& sigmaR (tau/process error)~= 0.6
+  \item uniform priors on q: -10 to 0
+  \item mean weight sig~=~0.15
+  \item catch series v3: 18 August 2016
+  \item h beta prior (mean=0.7~/~SD=0.15)
+  \item fix ln(Rbar) \& ln(Rinit)
+  \item equilibrium start in 1967 (use all of GB Reed, including 1995)
+  \item WAP CPUE indices (uniform -10 to 0)
+  \item version iscam-delaydiff.exe: ln(R0)=ln(Rbar)
+  \item estimate ln(R0) (uniform)
+  \item equal-weight for each age class when estimating von-B, interpolated by sex (Linf=67 cm)
+\end{enumerate}
+\call{assess01-assess06 run for 11,500,000 MCMC draws, saving every 10,000, for a posterior sample of 1,150.  Assume first 150 draws are the burn-in.}
+
+\subsubsection*{assess02 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item M fixed = 0.2
+\end{itemize}
+
+\subsubsection*{assess03 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item knife-edge recruitment at age~= 2
+\end{itemize}
+
+\subsubsection*{assess04 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item M fixed = 0.2
+  \item knife-edge recruitment at age~= 2
+\end{itemize}
+
+\subsubsection*{assess05 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item knife-edge recruitment at age~= 4
+\end{itemize}
+\note{Checked Martin Dorn's 2015 GOA stock assessment: used fixed M\%=~0.3 with 50\% selectivity for commercial fishery at age~=~4}
+
+\subsubsection*{assess06 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item unweighted growth model (N=543 for Females \& 304 for Males [RH vonB estimates])
+\end{itemize}
+\note{I don't think assess06 is as good an approach for growth, but does get a bit of contrast in the growth function.}
+
+\subsubsection*{assess07 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item uses the standardised mean weight with 2002 interpolated
+\end{itemize}
+\call{assess07-assess18 run for 10,300,000 MCMC draws, saving every 10,000 for a posterior sample of 1030 (3\% burn-in)}
+
+\subsubsection*{assess08 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item uses the standardised mean weight with 2002 interpolated
+\end{itemize}
+
+\subsubsection*{assess09 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item kage~= 4
+  \item uses the standardised mean weight with 2002 interpolated
+\end{itemize}
+
+\subsubsection*{assess10 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item kage~= 4
+  \item uses the standardised mean weight with 2002 interpolated
+\end{itemize}
+
+\subsubsection*{assess11 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item uses the standardised mean weight with 2002 interpolated
+  \item CPUE index series dropped
+\end{itemize}
+
+\subsubsection*{assess12 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item kage~= 4
+  \item uses the standardised mean weight with 2002 interpolated
+  \item CPUE index series dropped
+\end{itemize}
+
+\subsubsection*{assess13 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item uses the standardised mean weight with 2002 interpolated
+  \item alternate (Linf~= 78cm) growth model based on DFO surface ages
+\end{itemize}
+
+\subsubsection*{assess14 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item kage~= 4
+  \item uses the standardised mean weight with 2002 interpolated
+  \item alternate (Linf~= 78cm) growth model based on DFO surface ages
+\end{itemize}
+
+\subsubsection*{assess15 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item 1972-2015 standardised unsorted mean weights
+\end{itemize}
+
+\subsubsection*{assess16 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item 1972-2015 standardised unsorted mean weights
+\end{itemize}
+
+\subsubsection*{assess17 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item kage~= 4
+  \item 1972-2015 standardised unsorted mean weights
+\end{itemize}
+
+\subsubsection*{assess18 -- same as assess01 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item kage~= 4
+  \item 1972-2015 standardised unsorted mean weights
+\end{itemize}
+
+\bigskip
+
+\blue{[23 December 2016 - 06 January 2017]}
+
+The coastwide Run Set was restarted when Rowan discovered on 23 December 2016 that the catch series I was using (WAP\_Merged\_Catch3.xls) did not include the JV observed catch that had been kept in GFBio (for obscure reasons).
+So I repeated my earlier runs, starting with assess15 (which was the current ``base'' favourite), given that the previous assess15 was using a deficient catch data series.
+
+\subsubsection*{assess15}
+\begin{enumerate}[nosep]
+  \item M fixed~=~0.30
+  \item knife-edge recruitment at age~=~3
+  \item 1972-2016 standardised unsorted mean weights
+  %\item Brody parameters: alpha\_g~= 0.3475, rho\_g~=0.8668, wk~= 0.4929
+  %\item growth parameters: Linf~= 66.9436, k~= 0.211778, to~= -1.13642
+  %\item length-weight allometry: a~= 7.1018E-06, b~= 3.0415 (DD: used only to derive Brody)
+  \item variance to sig (observation error)~= 0.2 \& sigmaR (tau/process error)~= 0.6
+  \item uniform priors on q: -10 to 0
+  \item mean weight sig~=~0.15
+  \item catch series v4: 2016-09-12
+  \item h beta prior (mean=0.7~/~SD=0.15)
+  \item fix ln(Rbar) \& ln(Rinit)
+  \item equilibrium start in 1967 (use all of GB Reed, including 1995)
+  \item WAP CPUE indices (uniform -10 to 0)
+  \item version iscam-delaydiff.exe: ln(R0)=ln(Rbar)
+  \item estimate ln(R0) (uniform)
+  \item equal-weight for each age class when estimating von-B, interpolated by sex (Linf~= 67cm)
+\end{enumerate}
+\call{This set of runs were run for 10,300,000 MCMC draws, saving every 10,000 for a posterior sample of 1030 (3\% burn-in)}
+
+\subsubsection*{assess16 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+\end{itemize}
+
+\subsubsection*{assess17 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item kage~= 4
+\end{itemize}
+
+\subsubsection*{assess18 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item kage~= 4
+\end{itemize}
+
+\subsubsection*{assess19 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item 1975-2009 standardised sorted (=keepers) mean weights
+\end{itemize}
+
+\subsubsection*{assess20 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item 1975-2009 standardised sorted (=keepers) mean weights
+\end{itemize}
+
+\subsubsection*{assess21 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item kage~= 4
+  \item 1975-2009 standardised sorted (=keepers) mean weights
+\end{itemize}
+
+\subsubsection*{assess22 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item kage~= 4
+  \item 1975-2009 standardised sorted (=keepers) mean weights
+\end{itemize}
+
+\subsubsection*{assess23 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item CPUE index series dropped
+\end{itemize}
+
+\subsubsection*{assess24 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item kage~= 4
+  \item CPUE index series dropped
+\end{itemize}
+
+\subsubsection*{assess25 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item alternate (Linf=78 cm) growth model based on DFO surface ages
+\end{itemize}
+
+\subsubsection*{assess26 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item kage~= 4
+  \item alternate (Linf=78 cm) growth model based on DFO surface ages
+\end{itemize}
+
+\subsubsection*{assess27 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item iscamdelaydiff fixes R0 = theta(4) (log\_avgrec)
+\end{itemize}
+
+\subsubsection*{assess28 -- same as assess15 except:}
+\begin{itemize}[nosep]
+  \item M~= 0.35
+  \item iscamdelaydiff fixes R0 = theta(1) (ro)
+  \item iscamdelaydiff fixes Rbar = theta(4) (log\_avgrec)
+\end{itemize}
+
+\subsubsection*{assess29 -- same as assess21 except:}
+\begin{itemize}[nosep]
+  \item iscamdelaydiff fixes R0 = theta(4) (log\_avgrec)
+\end{itemize}
+
+\subsubsection*{assess30 -- same as assess21 except:}
+\begin{itemize}[nosep]
+  \item iscamdelaydiff fixes R0   = theta(1) (ro)
+  \item iscamdelaydiff fixes Rbar = theta(4) (log\_avgrec)
+\end{itemize}
+
+
+%\clearpage
+%===========================================================
+\bibliographystyle{resDoc}
+%% Use for appendix bibliographies only: (http://www.latex-community.org/forum/viewtopic.php?f=5&t=4089)
+%\renewcommand\bibsection{\section{References}}
+\bibliography{C:/Users/haighr/Files/GFish/CSAP/Refs/CSAPrefs}
+\end{document}
+%===========================================================

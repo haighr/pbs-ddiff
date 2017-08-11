@@ -1,0 +1,11 @@
+Notes to getting DD working for Walleye Pollock
+
+1. Changed all instances of `sst' to `wap' in R code (pcod_iscamLoadScenarios.r and pcod_iscamFigs.r), mostly `sstmod' -> `wapmod'.
+2. Changed title for GUI from Shortspine Thornyhead to Walleye Poolock (not critical).
+3. Changed `delaydiff' setting to `1' from `0' in GUI, line 42.
+4. Commented out `source("cribtab.r")' in line 70 of `pcod_iscam.r'.
+5. Added function name to WARNING to facilitate debugging.
+6. Add MCMC warning to `plotChains'.
+7. Checked for MCMCs in line 566 of `pcod_iscam.r' before calling `plotChains'.
+7. Checked for MCMCs in line 579 of `pcod_iscam.r' before calling `plotSnail'.
+

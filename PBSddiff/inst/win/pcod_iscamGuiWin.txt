@@ -1,0 +1,345 @@
+window name=iscamGui title="iSCAM Delay Difference: Walleye Pollock 2017"
+
+grid 2 1 padx=5 pady=5 sticky=W
+	grid 2 1 sticky=N pady="0 10" #relief=raised
+		object name=scenarioHeader rowshow=5 function=.subView action="changeSensStatus" entrybg="aliceblue" width="50 5" font="12" padx=10 pady="0 0" edit=T
+	grid 1 9 sticky=W padx=25 pady="5 0"
+		label text="Scenario " font="12" sticky=E
+		button name=prevScenario    function=.subView action="prevScenario"        width=5  text="<---" bg=mistyrose
+		entry name=entryScenario    function=.subView action="changeEntryScenario" value=1 width=4  padx=5 entryfont="14"
+		button name=nextScenario    function=.subView action="nextScenario"        width=5  text="--->" bg=honeydew
+		button text="Desc" func=openFile action=ScenDesc.txt bg=moccasin padx="20 0"
+		button text="Group" func=openFile action=ScenGroup.txt bg=moccasin padx="0 0"
+		button text="Update SG" func=updateSG action=updateSG bg=moccasin padx="0 0"
+		button text="cribtab" func=openFile action=cribtab.csv bg=pink padx="0 0"
+		button text="runHistory" func=openFile action=runHistory.pdf bg=palegreen padx="0 0"
+
+grid 1 1 sticky=N
+	notebook name=nbPage tabs="IN OUT ES MB PARAM MCMC SENS RETRO RV" font="8" selected=3
+	#--------------------------------------------------------------------#
+	#                        Notebook Tab: Input                         #
+	#--------------------------------------------------------------------#
+	grid 2 1
+	label text="INPUT" font=bold sticky=N fg=blue
+	grid 2 1 sticky=N pady="5 0"
+		grid 1 2 relief=raised sticky=N
+			grid 3 1 sticky=N #pady="5 0"
+				label text="Historical Controls" font=bold sticky=W
+				check name=useHRP text="Use historical controls" checked=T sticky=W
+				grid 2 2 sticky=W
+					label text="Year(s) of minimum biomass" sticky=W padx="0 5"
+					entry name=minYr mode=character value=2001 action="minYr" width=12 sticky=W
+					label text="Years to average biomass" sticky=W padx="0 5"
+					entry name=aveYr mode=character value="1967:2016" action="aveYr" width=12 sticky=E
+			grid 3 1  sticky=N padx="10 0"
+				label text="General Controls" font=bold sticky=W
+				check name="usingSweave" text="Use Sweave settings" checked=F sticky=W function=doAction action="assign(`usingSweave`, getWinVal(winName=`iscamGui`)$usingSweave,envir=.GlobalEnv)"
+				entry name=currTAC value=1320 label="Current TAC " action="getTAC" width=5 entryfont="10" sticky=W
+		entry name=fdScenarios mode=character width=30 value="../Scenarios/" font="12" entryfont="12" padx="10 0" pady="5 0" label="Scenario directory" sticky=W function=doAction action="source(`cribtab.r`); source(`pcod_iscamLoadScenarios.r`); loadScenarios(); .pcod_iscamGUIsetup(`pcod_iscamGui`); setWinVal(list(fdScenarios=fdScenarios),winName=`iscamGui`)"
+
+	#--------------------------------------------------------------------#
+	#--                      Notebook Tab: Output                      --#
+	#--------------------------------------------------------------------#
+	grid 2 1
+	label text="OUTPUT" font=bold sticky=N fg=blue
+	grid 2 1 sticky=N pady="0 0"
+		grid 6 1 relief=sunken padx=20
+			grid 1 2
+				button name=writePlots      function=.subView action="writePlots"      width=25 text="Write scenario figures"
+				button name=writeTables     function=.subView action="writeTables"     width=25 text="Write scenario tables"
+			grid 1 2 
+				button name=writeAllPlots   function=.subView action="writeAllPlots"   width=25 text="Write ALL figures"
+				button name=writeAllTables  function=.subView action="writeAllTables"  width=25 text="Write ALL tables"
+			grid 1 2
+				button name=writeSensPlots  function=.subView action="writeSensPlots"  width=25 text="Write sensitivity   figures" fg="chocolate4"
+				button name=writeRetroPlots function=.subView action="writeRetroPlots" width=25 text="Write retrospective figures" fg="chocolate4"
+			grid 1 2 sticky=N padx=30
+				radio name=executeType value=sMPD  text="MPD"  function=.subView mode=character sticky=W
+				radio name=executeType value=sMCMC text="MCMC" function=.subView mode=character sticky=W
+			grid 1 4 sticky=NW padx=0
+				label text="-maxfn"  font="14" width=8  sticky=W
+				label text="-mcmc"   font="14" width=10 sticky=W
+				label text="-mcsave" font="14" width=8  sticky=W
+				label text="0=ASM\n1=DelayDiff" font="12" width=10 sticky=W
+			grid 1 5 sticky=NW padx=0 pady="0 0"
+				entry name=maxfn  width=8  value=2000 entryfont="14"
+				entry name=mcmc   width=10 value=100000 entryfont="14"
+				entry name=mcsave width=8  value=50 entryfont="14"
+				entry name=delaydiff width=8 value=1 entryfont="14"
+				button name=runCurrScenario   function=.subView action="runCurrScenario"     width=10 text="Run Scenario" fg="blue"
+		entry name=fdScenarios mode=character width=30 value="../Scenarios/" font="12" entryfont="12" padx="10 0" pady="5 0" label="Scenario directory" sticky=W function=doAction action="source(`cribtab.r`); source(`pcod_iscamLoadScenarios.r`); loadScenarios(); .pcod_iscamGUIsetup(`pcod_iscamGui`); setWinVal(list(fdScenarios=fdScenarios),winName=`iscamGui`)"
+
+	#--------------------------------------------------------------------#
+	#--                      Notebook Tab: ExecutiveSummary            --#
+	#--------------------------------------------------------------------#
+	grid 1 2 relief=raised
+		#grid 19 3 sticky=N relief=raised
+		grid 10 3 sticky=N #relief=solid
+		#1
+			label text="Executive Summary" font=bold sticky=W
+			label text="ylim" 
+			label text="max Y"
+		#2
+			label text="Spawning Biomass" font=bold sticky=W
+			entry name=biomassYlim function=.subView action="changeBiomassYlim" width=5 value=100 entryfont="14" sticky=E
+			check name=maxBiomassYlim function=.subView action="changeBiomassYlim" checked=T
+		#3
+			radio name=viewPlotType function=.subView value=sBiomassMPD action=sBiomassMPD text="Spawning Biomass (MPD only)" mode=character sticky=W
+			null
+			null
+		#4
+			radio name=viewPlotType function=.subView value=sBiomass action=sBiomass text="Spawning Biomass (MCMC)" mode=character sticky=W
+			null
+			label text="TAC"
+		#5
+			radio name=viewPlotType function=.subView value=sBiomassMPDOver action=sBiomassMPDOver text="Spawning Biomass (MPD overlay)" mode=character sticky=W
+			null
+			entry name=currTAC value=1320 label=NULL action="getTAC" width=5 entryfont="10" sticky=W
+		#6
+			label text="Spawning Depletion" font=bold sticky=W
+			label text="ylim" 
+			label text="max Y"
+		#7
+			check name=useHRP text="Use historical controls" checked=T sticky=W
+			entry name=depletionYlim    function=.subView action="changeDepletionYlim" width=5 value=3.5 entryfont="14" sticky=E
+			check name=maxDepletionYlim function=.subView action="changeDepletionYlim" checked=T
+		#8
+			radio name=viewPlotType function=.subView value=sDepletionMPD action=sDepletionMPD text="Spawning Depletion (MPD only)" mode=character sticky=W
+			null
+			null
+		#9
+			radio name=viewPlotType function=.subView value=sDepletion action=sDepletion text="Spawning Depletion (MCMC)" mode=character sticky=W
+			null
+			null
+		#10
+			radio name=viewPlotType function=.subView value=sDepletionMPDOver action=sDepletionMPDOver text="Spawning Depletion (MPD overlay)" mode=character sticky=W
+			null
+			null
+		grid 10 3 sticky=N relief=solid
+		#1
+			label text="Other Plots" font=bold sticky=W
+			label text="ylim" 
+			label text="max Y"
+		#2
+			radio name=viewPlotType function=.subView value=sFMPD action=sFMPD text="Fishing mortality (MPD)" mode=character sticky=W
+			entry name=recruitmentYlim function=.subView action="changeRecruitmentYlim" width=5 value=50 entryfont="14" sticky=E
+			check name=maxRecruitmentYlim function=.subView action="changeRecruitmentYlim" checked=T
+		#3
+			radio name=viewPlotType function=.subView value=sFMCMC action=sFMCMC text="Fishing mortality (MCMC)" mode=character sticky=W
+			null
+			null
+		#4
+			radio name=viewPlotType function=.subView value=sBtBmsy action=sBtBmsy text="Bt/Bmsy_Ft/Fmsy SBt/SB0_Ft" mode=character sticky=W
+			null
+			null
+		#5
+			radio name=viewPlotType function=.subView value=sLandings action=sLandings text="Landings" mode=character sticky=W
+			null
+			null
+		#6
+			radio name=viewPlotType function=.subView value=sEffort action=sEffort text="Effort" mode=character sticky=W
+			null
+			null
+		#7
+			radio name=viewPlotType function=.subView value=sRecruitsMPD action=sRecruitsMPD text="Age-1 Recruits (MPD)" mode=character sticky=W
+			null
+			null
+		#8
+			radio name=viewPlotType function=.subView value=sRecruits action=sRecruits text="Age-1 Recruits (MCMC)" mode=character sticky=W
+			null
+			null
+		#9
+			radio name=viewPlotType function=.subView value=sEquilYield action=sEquilYield text="Equilibrium Yield" mode=character sticky=W
+			null
+			null
+		#10
+			radio name=viewPlotType function=.subView value=sEquilF action=sEquilF text="Equilibrium Fishing Mortality" mode=character sticky=W
+			null
+			null
+
+	#--------------------------------------------------------------------#
+	#--                      Notebook Tab: MainBody                    --#
+	#--------------------------------------------------------------------#
+	grid 2 1
+	label text="MAIN BODY" font=bold sticky=N fg=blue
+	grid 1 3 sticky=N relief=raised pady="5 0"
+		grid 4 1 sticky=N
+			label text="DD Fits" font=bold sticky=NW
+			radio name=viewPlotType function=.subView value=sSurvBiomassFit     text="Survey Biomass Fit"      mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sCatchFit           text="Catch Fit"               mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sWeightFit          text="Mean Weight Fit"         mode=character sticky=W
+		grid 8 1 sticky=N
+			label text="Reference Points" font=bold sticky=NW
+			entry name=currTAC value=1320 label="Current TAC " action="getTAC" width=5 entryfont="10" sticky=W
+			check name=useHRP text="Use historical controls" checked=T sticky=W
+			radio name=viewPlotType function=.subView value=sBench      action=sBench      text="F and B benchmarks" mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sMSYCtlPts  action=sMSYCtlPts  text="MSY control points (freq)" mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sHistCtlPts action=sHistCtlPts text="Historical control points (freq)" mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sCtlPtsBox  action=sCtlPtsBox  text="Reference points (boxplot)" mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sSnailTrail action=sSnailTrail text="Snail trail (u/uref vs B/Bref)" mode=character sticky=W
+		grid 9 1 sticky=N
+			label text="Ages" font=bold sticky=NW
+			radio name=viewPlotType function=.subView value=sSurvAgeResids1     text="Age Resids 1"            mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sSurvAgeResids2     text="Age Resids 2"            mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sSurvAgeProps       text="Age Props"               mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sSurvAgePropsFit    text="AgeProp Fit"             mode=character sticky=W
+			label text="Selectivity" font=bold sticky=NW
+			radio name=viewPlotType function=.subView value=sSelectivities      text="Gear selectivities"      mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sTimeVaryingSurvSel text="Time-varying survey sel" mode=character sticky=W
+			radio name=viewPlotType function=.subView value=sTimeVaryingCommSel text="Time-varying comm. sel"  mode=character sticky=W
+
+	#--------------------------------------------------------------------#
+	#--                      Notebook Tab: ParameterEstimates          --#
+	#--------------------------------------------------------------------#
+	grid 2 1
+	label text="PARAMETER ESTIMATES" font=bold sticky=N fg=blue
+	grid 8 1 sticky=N relief=raised pady="5 0"
+		#label text="Parameter Estimates" font=bold sticky=NW
+		radio name=viewPlotType value=sPosteriorParams action=sPosteriorParams text="Posterior parameter estimates v Prior PDs" function=.subView mode=character sticky=W
+		radio name=viewPlotType value=sPosteriorParams2 action=sPosteriorParams2 text="Posterior parameter estimates no logs" function=.subView mode=character sticky=W
+		radio name=viewPlotType value=sPosteriorParamskey action=sPosteriorParamskey text="Key posterior parameter estimates only, no logs" function=.subView mode=character sticky=W
+		radio name=viewPlotType value=sParameterPairs action=sParameterPairs text="Pairs with histograms" function=.subView mode=character sticky=W
+		radio name=viewPlotType value=sParameterPairs2 action=sParameterPairs2 text="Pairs with histograms no logs" function=.subView mode=character sticky=W
+		radio name=viewPlotType value=sParameterPairskey action=sParameterPairskey text="Key pairs only" function=.subView mode=character sticky=W
+		radio name=viewPlotType value=sParameterPairsnologkey action=sParameterPairsnologkey text="Key pairs only, no logs" function=.subView mode=character sticky=W
+		radio name=viewPlotType value=sVariancePartitions action=sVariancePartitions text="Variance partitions" function=.subView mode=character sticky=W
+
+	#--------------------------------------------------------------------#
+	#--                      Notebook Tab: MCMC Diagnostics            --#
+	#--------------------------------------------------------------------#
+	grid 2 1
+	label text="MCMC DIAGNOSTICS" font=bold sticky=N fg=blue
+	grid 4 3 byrow=T sticky=N relief=raised pady="5 0"
+	#1
+		#label text="MCMC Diagnostics" font=bold sticky=NW
+		#null
+		#null
+	#2
+		radio name=viewPlotType value=sMCMCTrace action=sMCMCTrace text="Traceplots" function=.subView mode=character sticky=W
+		label text="Burn" font=bold width=5 sticky=E
+		entry name=burn function=.subView action="changeBurnThin" width=5 value=30 entryfont="14"
+	#3
+		radio name=viewPlotType value=sMCMCChains action=sMCMCChains text="Three chains" function=.subView mode=character sticky=W
+		label text="Thin" font="14" width=5 sticky=E
+		entry name=thin function=.subView action="changeBurnThin" width=5 value=1   entryfont="14"
+	#4
+		radio name=viewPlotType value=sMCMCAutocor action=sMCMCAutocor text="Autocorrelation" function=.subView mode=character sticky=W
+		null
+		null
+	#5
+		radio name=viewPlotType value=sMCMCDensity text="Density" function=.subView mode=character sticky=W
+		null
+		null
+	#6
+		#radio name=viewPlotType value=sMCMCGeweke text="Geweke Diagnostic" function=.subView mode=character sticky=W
+		#label text="Nbin" font=bold width=5 sticky=E
+		#entry name=nbin  function=.subView action="changeBurnThin" width=5 value=20   entryfont="14"
+	#7
+		#radio name=viewPlotType value=sMCMCGelman text="Gelman Diagnostic" function=.subView mode=character sticky=W
+		#null
+		#null
+
+	#--------------------------------------------------------------------#
+	#--                      Notebook Tab: Sensitivity Comparisons     --#
+	#--------------------------------------------------------------------#
+	grid 2 1
+	label text="SENSITIVITY GROUPS (SG)" font=bold sticky=N fg=blue
+	grid 2 1 byrow=T sticky=N relief=raised pady="5 0"
+	#1
+		#label text="Sensitivity Groups"     font=bold sticky=W
+	#2
+	grid 1 4 sticky=W
+		label text="SG number"     sticky=W
+		button name=prevSens   function=.subView action="prevSens"     width=5 text="<--" fg="blue"
+		entry name=entrySensitivityGroup function=.subView action="changeSensitivityGroup" width=5  padx=10 entryfont="14" value=1 sticky=W
+		button name=nextSens   function=.subView action="nextSens"     width=5 text="-->" fg="blue"
+	#3
+	grid 5 5 sticky=W
+		check name=useHRP text="Use historical controls" checked=T sticky=W
+		label text="ylim" 
+		label text="maxY"
+		label text="outs"
+		label text="log10"
+	#5
+		radio name=viewPlotType value=sSensSB action=sSensSB text="Spawning biomass" function=.subView mode=character sticky=W
+		entry name=biomassSensYlim  width=5 value=100 function=.subView action="changeBiomassSensYlim" entryfont="12"
+		check name=maxBiomassSensYlim checked=T function=.subView action="changeBiomassSensYlim" 
+		null
+		null
+	#6
+		radio name=viewPlotType value=sSensD action=sSensD text="Depletion" function=.subView mode=character sticky=W
+		entry name=depletionSensYlim  width=5 value=3.5 function=.subView action="changeDepletionSensYlim" entryfont="12"
+		check name=maxDepletionSensYlim checked=T function=.subView action="changeDepletionSensYlim" 
+		null
+		null
+	#7
+		radio name=viewPlotType value=sSensRec action=sSensRec text="Recruits" function=.subView mode=character sticky=W
+		entry name=recruitmentSensYlim  width=5 value=100 function=.subView action="changeRecruitmentSensYlim" entryfont="12"
+		check name=maxRecruitmentSensYlim checked=T function=.subView action="changeRecruitmentSensYlim" 
+		null
+		null
+	#8
+		radio name=viewPlotType value=sSensRefPts action=sSensRefPts text="Reference points" function=.subView mode=character sticky=W
+		entry name=RefptSensYlim  width=5 value=500 function=.subView action="changeRefptSensYlim" entryfont="12"
+		check name=maxRefptSensYlim checked=T function=.subView action="changeRefptSensYlim"
+		check name=outline checked=F function=.subView action="changeRefptSensYlim"
+		check name=useLog  checked=F function=.subView action="changeRefptSensYlim"
+
+	#--------------------------------------------------------------------#
+	#--                      Notebook Tab: Retrospectives              --#
+	#--------------------------------------------------------------------#
+	grid 2 1
+	label text="RETROSPECTIVES" font=bold sticky=N fg=blue
+	grid 7 3 sticky=N relief=raised pady="5 0"
+	#1
+		#label text="Retrospectives"     font=bold sticky=NW
+		#null
+		#null
+	#2
+		null
+		label text="ylim" 
+		label text="max Y"
+	#3
+		radio name=viewPlotType value=sRetroSB             text="Spawning biomass"                 function=.subView mode=character sticky=W
+		entry name=biomassRetroYlim  width=5 value=6 function=.subView action="changeBiomassRetroYlim" entryfont="14"
+		check name=maxBiomassRetroYlim checked=F function=.subView action="changeBiomassRetroYlim" 
+	#4
+		radio name=viewPlotType value=sRetroD              text="Depletion"                        function=.subView mode=character sticky=W
+		entry name=depletionRetroYlim  width=5 value=2.5 function=.subView action="changeDepletionRetroYlim" entryfont="14"
+		check name=maxDepletionRetroYlim checked=F function=.subView action="changeDepletionRetroYlim" 
+	#5
+		radio name=viewPlotType value=sRetroRec            text="Age-1 Recruits"                   function=.subView mode=character sticky=W
+		entry name=recruitmentRetroYlim  width=5 value=35 function=.subView action="changeRecruitmentRetroYlim" entryfont="14"
+		check name=maxRecruitmentRetroYlim checked=F function=.subView action="changeRecruitmentRetroYlim" 
+	#6
+		null
+		null
+		null
+	#7
+		null
+		check name=showRetroOutput checked=F function=.subView action="changeShowRetroOutput" sticky=E
+		label text="Show Retro Output\n(slow if checked)" font="10" width=20 pady=5 sticky=N
+	#8
+		entry name=entryRetro width=5 pady=5 value=5 entryfont="14" sticky=E
+		label text="Years" font="14" width=5 pady=5 sticky=N
+		grid 1 2
+			button name=runRetros function=.subView action="runRetros" width=10 padx=5 pady=0 text="Run retros"  fg="blue"
+			button name=runAllRetros function=.subView action="runAllRetros" width=10 padx=5 pady=0 text="Run All retros"  fg="blue"
+	#9
+		#null
+		#null
+		#button name=runAllRetros function=.subView action="runAllRetros" width=15 padx=5 pady=0 text="Run All retros"  fg="blue"
+
+	#--------------------------------------------------------------------#
+	#--                      Notebook Tab: RuntimeValues               --#
+	#--------------------------------------------------------------------#
+	grid 2 1
+	label text="RUNTIME VALUES" font=bold sticky=N fg=blue
+	grid 5 1 sticky=NW relief=raised pady="5 0"
+		#label text="Runtime values" font=bold sticky=NW
+		radio name=viewPlotType function=.subView value=sObjFuncVal text="Objective function Val" mode=character sticky=W
+		radio name=viewPlotType function=.subView value=sMaxGrad    text="Max Gradient" mode=character sticky=W
+		radio name=viewPlotType function=.subView value=sFuncEvals  text="Function Evaluations" mode=character sticky=W
+		radio name=viewPlotType function=.subView value=sHangCodes  text="Hang Codes" mode=character sticky=W
+		radio name=viewPlotType function=.subView value=sExitCodes  text="Exit Codes" mode=character sticky=W
+
