@@ -645,8 +645,11 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
   }  
 }
 
+## --------------------------
+## Last modified by RH 170906
+## --------------------------
 .writeTables <- function(silent=FALSE, gui=TRUE){
-  #write all tables for the given scenario to disk (last modified: RH 170802)
+  ## write all tables for the given scenario to disk
   if(exists("scenarioCurr",envir=.GlobalEnv, inherits=FALSE))
     scenarioCurr = get("scenarioCurr",envir=.GlobalEnv)
   else stop("PROBLEM: scenarioCurr not found in Global environment")
@@ -662,21 +665,22 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
   cat("Writing tables\n")
   cat("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
   if(delaydiff && nyr>=2012){
-    try(table.projections(), silent=silent)
-    try(table.decision(useHRP=val$useHRP, minYr=val$minYr, aveYr=val$aveYr), silent=silent)
-    # Make Fishing mortality Quantiles and MPD table
     #quantProbs <- c(0.025,0.5,0.975)
     quantProbs <- c(0.05,0.5,0.95) ## SST+WAP
     weightScale <- 1000.0
-    table.mcmc.mpd(mcmcData  = A$mc.ft,
+debug = F; if (!debug) {
+    try(table.projections(), silent=silent)
+    try(table.decision(useHRP=val$useHRP, minYr=val$minYr, aveYr=val$aveYr), silent=silent)
+    ## Make Fishing mortality Quantiles and MPD table
+    table.mcmc.mpd(mcmcData = A$mc.ft,
                   burnin    = Burn,
                   probs     = quantProbs,
                   mpdData   = A$ft,
                   colLabels = A$yr,
                   roundDec  = 6, # Number of decimal places
                   tableName = "FishingMortalityQuants")
-    # Make Biomass Quantiles and MPD table
-    table.mcmc.mpd(mcmcData  = A$mc.sbt / weightScale,
+    ## Make Biomass Quantiles and MPD table
+    table.mcmc.mpd(mcmcData = A$mc.sbt / weightScale,
                   burnin    = Burn,
                   probs     = quantProbs,
                   mpdData   = A$sbt / weightScale,
@@ -684,8 +688,8 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
                   formatOut = "%1.3f",
                   roundDec  = 6, # Number of decimal places
                   tableName = "BiomassQuants")
-    # Make Recruitment Quantiles and MPD table
-    table.mcmc.mpd(mcmcData  = A$mc.rt,
+    ## Make Recruitment Quantiles and MPD table
+    table.mcmc.mpd(mcmcData = A$mc.rt,
                   burnin    = Burn,
                   probs     = quantProbs,
                   mpdData   = A$rt,
@@ -693,7 +697,8 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
                   colLabels = A$yr[-(1:ifelse(A$delaydiff==1,max(A$sage,A$kage-A$sage),A$sage))], # Use kage if delaydiff model for age-k recruitment
                   roundDec  = 6, # Number of decimal places
                   tableName = "RecruitmentQuants")
-    # Make Paramter Quantiles and MPD values table
+
+    ## Make Paramter Quantiles and MPD values table
     mcmcParamTable   <- cbind(exp(A$mc$log.ro), A$mc$h, exp(A$mc$log.m), exp(A$mc$log.rbar), exp(A$mc$log.rinit), A$mc$bo)
     paramNames       <- c("r0","steepness","m","rbar","rbar_init","b0")
     mpdParamVector   <- c(A$ro, A$steepness, A$m, A$rbar, A$rinit, A$sbo)
@@ -704,19 +709,23 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
       paramNames     <- c(paramNames, paste0("q",qInd))
     }
     colnames(mcmcParamTable) <- paramNames
-    table.mcmc.mpd(mcmcData  = mcmcParamTable,
+    table.mcmc.mpd(mcmcData = mcmcParamTable,
                   burnin    = Burn,
                   probs     = quantProbs,
                   mpdData   = mpdParamVector,
                   colLabels = paramNames,
                   roundDec  = 6, # Number of decimal places
                   tableName = "ParameterQuants")
+}
 
 		### ========================================
 		### Make one table with Parameters (P), Biomass-based quantities (B), and MST-based quantities (M)
 		### The table is formatted to be latex-ready and sent to 'PBMQuants.csv' in the relevant Scenario's table folder.
 		### When building the Model Results latex file, import the CSV and use the PBStools function `texArray'.
 		### ========================================
+
+		##  For compatibility with calcHRPs, adjust for burnin before sending to 'table.mcmc.mpd()'
+
 		# 1. Make Paramter Quantiles and MPD values table
 		mcmcParamTable <- cbind(rep(0,nrow(A$mc)),exp(A$mc$log.ro), A$mc$h, exp(A$mc$log.m), exp(A$mc$log.rbar), exp(A$mc$log.rinit))
 		mpdParamVector <- c(0,A$ro, A$steepness, A$m, A$rbar, A$rinit)
@@ -728,21 +737,26 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
 			mpdParamVector <- c(mpdParamVector, A$q[qInd])
 			paramNames     <- c(paramNames, paste0("$q_",qInd,"$"))
 		}
+		mcmcParamTable = mcmc2(mcmcParamTable, start=Burn+1) ## get rid of burnin now
 
 		## Collect MPD values
 		Bcurr.mpd = (rev(A$sbt))[1]  ## final year fixed in loadScenarios
 		Ucurr.mpd = A$ut[length(A$yr)]
 
-		## MSY-based
+		## MSY-based MPD
 		B0.mpd    = A$sbo
 		msy.mpd   = A$msy
 		Bmsy.mpd  = A$bmsy
 		Umsy.mpd  = 1-exp(-A$fmsy)
 
-		## HRP
+		## HRP MPD
 		aveYr     = renderVals(aveYr=val$aveYr,simplify=TRUE)
-		Bavg.mpd  = mean(A$sbt[is.element(yrs,aveYr)])
-		LRP.mpd   = min(A$sbt)
+		sbt.mpd   = A$sbt; names(sbt.mpd) = A$yrs
+		sbt.min   = findBmin(sbt.mpd,aveYr)
+		#Bavg.mpd  = mean(A$sbt[is.element(yrs,aveYr)])
+		#LRP.mpd   = min(A$sbt)
+		Bavg.mpd  = sbt.min["Bavg"]
+		LRP.mpd   = sbt.min["Bmin"]
 		USR.mpd   = 2. * LRP.mpd
 		Bcurr.Bavg.mpd = Bcurr.mpd/Bavg.mpd
 		Bcurr.LRP.mpd  = Bcurr.mpd/LRP.mpd
@@ -751,37 +765,46 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
 		Ucurr.Uavg.mpd = Ucurr.mpd/Uavg.mpd
 
 		## Collect MCMC values
-		dmcmc = subset(A$mcproj, TAC==0)  # take the first tac (=0) from each posterior sample - the control points do not change with tac
+		#dmcmc = subset(A$mcproj, TAC==0)  # take the first tac (=0) from each posterior sample - the control points do not change with tac
+		dmcmc = mcmc2(subset(A$mcproj, TAC==0), start=Burn+1)
 		zeros = rep(0,nrow(dmcmc))
 		Bcurr.mcmc = dmcmc[,paste0("B",A$currYr)]
 		Ucurr.mcmc = 1-exp(-dmcmc[,paste0("F",A$lastYr)])
 		## MSY-based
-		B0.mcmc    = A$mc$bo  ## same as dmcmc[,"B0"]
+		B0.mcmc    = dmcmc[,"B0"]  ## same as A$mc$bo
 		msy.mcmc   = dmcmc[,"MSY"]
 		Bmsy.mcmc  = dmcmc[,"BMSY"]
 		Umsy.mcmc  = dmcmc[,"UMSY"]
-		## HRP (could use function `calcHRP' with Burn=0, but vectors below are set up as matrices so just leave for now
-#browser();return()
-		post.bt   = A$mc.sbt #[,1:Nyears]
-		post.ba   = post.bt[,is.element(yrs,aveYr)]
-		Bavg.mcmc = apply(post.ba,1,function(x){mean(x)}) ##  Bo = Bavg
 
-		med.bt = sapply(post.bt,median)              ## only used to determine minimum year
-		minYr  = yrs[is.element(med.bt,min(med.bt))] ## overrides GUI value or user's value
+		## HRP MCMC -- use function `calcHRP' with Burn=0 in 'table.mcmc.mpd()'
+		HRPs = calcHRP(A=A, aveYr=aveYr, Burn=Burn)  ## one function to collect all of the stuff below
+		unpackList(HRPs)
+#browser();return()
+		#post.bt   = A$mc.sbt #[,1:Nyears]
+		#post.avebt   = post.bt[,is.element(yrs,aveYr)]
+		#Bavg.mcmc = apply(post.avebt,1,function(x){mean(x)}) ##  Bo = Bavg
+		Bavg.mcmc = post.abt
+
+		#med.bt = sapply(post.bt,median)              ## only used to determine minimum year
+		#minYr  = yrs[is.element(med.bt,min(med.bt))] ## overrides GUI value or user's value
 		## The following takes minimum depletion (BT/Bavg) across year(s) designated as minimum;
 		##     perhaps should be the median though if only one minimum year is specified, then it makes no difference.
-		LRP.mcmc = apply(post.bt[,is.element(yrs,minYr),drop=FALSE],1,min); ## across years therefore 1000 mins (+ Burn mins)
-		USR.mcmc = 2. * LRP.mcmc
+		#LRP.mcmc = apply(post.bt[,is.element(yrs,minYr),drop=FALSE],1,min); ## across years therefore 1000 mins (+ Burn mins)
+		#USR.mcmc = 2. * LRP.mcmc
+		LRP.mcmc = bLRPs
+		USR.mcmc = bUSRs
+
 		Bcurr.Bavg.mcmc = Bcurr.mcmc/Bavg.mcmc
 		Bcurr.LRP.mcmc  = Bcurr.mcmc/LRP.mcmc
 		Bcurr.USR.mcmc  = Bcurr.mcmc/USR.mcmc
-
-		post.ft   = A$mc.ft #[,1:Nyears]
-		post.ht   = 1 - exp(-post.ft)  ## harvest rate
-		post.ha   = post.ht[,is.element(yr,aveYr)]
-		Uavg.mcmc = apply(post.ha,1,function(x){mean(x)}) ##  uo = Uavg
-		Ucurr.Uavg.mcmc = Ucurr.mcmc/Uavg.mcmc
 #browser(); return()
+
+		#post.ft   = mcmc2(A$mc.ft, start=Burn+1) #[,1:Nyears]
+		#post.ht   = 1 - exp(-post.ft)                     ## harvest rate  (same as HRPs$post.ft)
+		#post.ha   = post.ht[,is.element(yr,aveYr)]        ## harvest rates in years for average  (same as HRPs$post.aveut)
+		#Uavg.mcmc = apply(post.ha,1,function(x){mean(x)}) ## average harvest rates (1000 MCMC samples) (same as HRPs$post.aut)
+		Uavg.mcmc = post.aut                              ## (unpacked from HRPs)
+		Ucurr.Uavg.mcmc = Ucurr.mcmc/Uavg.mcmc
 
 		if (!val$useHRP) {
 			# 2. Add Biomass-based values
@@ -801,7 +824,7 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
 		}
 		colnames(mcmcParamTable) <- paramNames
 		table.mcmc.mpd(mcmcData  = mcmcParamTable,
-			burnin    = Burn,
+			burnin    = 0,
 			probs     = quantProbs,
 			mpdData   = mpdParamVector,
 			colLabels = paramNames,

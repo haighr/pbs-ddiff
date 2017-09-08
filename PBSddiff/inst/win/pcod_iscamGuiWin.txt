@@ -34,7 +34,7 @@ grid 1 1 sticky=N
 			grid 3 1  sticky=N padx="10 0"
 				label text="General Controls" font=bold sticky=W
 				check name="usingSweave" text="Use Sweave settings" checked=F sticky=W function=doAction action="assign(`usingSweave`, getWinVal(winName=`iscamGui`)$usingSweave,envir=.GlobalEnv)"
-				entry name=currTAC value=1320 label="Current TAC " action="getTAC" width=5 entryfont="10" sticky=W
+				entry name=currTAC value=1000 label="Current TAC " action="getTAC" width=5 entryfont="10" sticky=W
 		entry name=fdScenarios mode=character width=30 value="../Scenarios/" font="12" entryfont="12" padx="10 0" pady="5 0" label="Scenario directory" sticky=W function=doAction action="source(`cribtab.r`); source(`pcod_iscamLoadScenarios.r`); loadScenarios(); .pcod_iscamGUIsetup(`pcod_iscamGui`); setWinVal(list(fdScenarios=fdScenarios),winName=`iscamGui`)"
 
 	#--------------------------------------------------------------------#

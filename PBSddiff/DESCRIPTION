@@ -1,0 +1,23 @@
+Package:     PBSddiff
+Version:     1.2.1
+Date:        2017-09-08
+Title:        GUI control for delay-difference output from iSCAM
+Authors@R: c(
+   person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
+   person("Chris", "Grandin", role = "aut", email = "chris.grandin@dfo-mpo.gc.ca"),
+   person(c("Paul", "J."), "Starr", role = "ctb", email = "paul@starrfish.net"),
+   person(c("Robyn", "E."), "Forrest", role = "ctb", email = "robyn.forrest@dfo-mpo.gc.ca")
+   )
+Author: Rowan Haigh [aut, cre], Chris Grandin [aut], Paul J. Starr [ctb], Robyn E. Forrest [ctb]
+Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
+Copyright:   2015-2017, Fisheries and Oceans Canada
+Depends:     R (>= 2.15.0), MASS, KernSmooth, MCMCpack, coda, PBSmodelling, grDevices
+Imports:     methods
+Description: Provides R code for GUI control of 'iSCAM' delay-difference model 
+             output for multiple scenarios. The code was originally created by 
+             'Chris Grandin' for 'Pacific Cod' but has been highly modified since for
+             'Shortspine Thornyhead' and 'Walleye Pollock'.
+License:     GPL (>= 2)
+URL:         https://github.com/pbs-software/pbs-ddiff,
+             https://github.com/pbs-software/pbs-modelling
+

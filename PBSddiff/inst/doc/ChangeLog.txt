@@ -1,10 +1,20 @@
 PBSddiff Changes
 ================
 Authors : CG  = Chris Grandin
+          PJS = Paul Starr
           RH  = Rowan Haigh
           RF  = Robyn Forrest
           SM  = Steve Martell
-          PJS = Paul Starr
+
+1.2.1 (2017-09-08)
+  • Added SST and WAP R-code and C-code archives. (RH 170908)
+  • Updated function `.writeTables' in `pcod_iscam.r' to use the function `calcHRP' in place of duplicated code. (RH 170907)
+  • Modified function `calcHRP' to call function `findBmin', which supplies `Bmin' (bLRP) and `Dmin' (dLRP) for every sample in the MCMC set. (RH 170907)
+  • Added new functions `findBmin' and `findMode' in `calcHRP.r'. (RH 170907)
+	`findBmin' was created from code formerly embedded in `calcHRP' and now  uses iteratively increasing 
+	quantiles to select candidate `Bmin' (low B which eventually revovers to Bavg) and `minYr' values for every MCMC sample.
+	`findMode' simply finds the modal value from a set of items like `minYr'.
+  • Added Rnw files for Shortspine Thornyhead (2016) Apps E&F as `Rnw-SST-2016.7z'. (RH 170811)
 
 1.2.0 (2017-08-11)
   • Made changes in `pcod_iscamFigs.r' (RH 170803)
