@@ -51,33 +51,33 @@ calcHRP = function(A, aveYr, minYr=NULL, Burn=0, Thin=1)
 	Bmin    = minList$Bmin
 	Dmin    = minList$Dmin
 	#Bavg    = minList$Bavg (no need to gather again as 'post.abt' = 'Bavg'
-	if (is.null(minYr)) {  ## this makes no sense any more
+#	if (is.null(minYr)) {  ## this makes no sense any more
 		## Override GUI value or user's value
 		minYrs = minList$minYr
 		minYr  = findMode(minYrs)
-	}
+#	}
 
 	## The following takes minimum biomass (Bt) across year(s) designated as minimum;
 	#bLRPs    = apply(post.bt[,match(minYr,yrs),drop=FALSE],1,min); ## across years therefore 1000 mins
 	bLRPs    = Bmin
-	bLRPci   = quantile(bLRPs,probs=c(0.025,0.5,0.975))
+	bLRPci   = quantile(bLRPs,probs=quants3)
 	bLRP     = median(bLRPs)
 
 	#bUSRs    = apply(post.bt[,match(minYr,yrs),drop=FALSE],1,function(x){2*min(x)}); ## across years therefore 1000 mins
 	bUSRs    = 2 * bLRPs
-	bUSRci   = quantile(bUSRs,probs=c(0.025,0.5,0.975))
+	bUSRci   = quantile(bUSRs,probs=quants3)
 	bUSR     = median(bUSRs)
-	collectHRP = c(collectHRP, "minYr", "bLRPs", "bLRP", "bLRPci", "bUSRs", "bUSR", "bUSRci")
+	collectHRP = c(collectHRP, "minYrs", "minYr", "bLRPs", "bLRP", "bLRPci", "bUSRs", "bUSR", "bUSRci")
 
 	## The following takes minimum depletion (BT/Bavg) across year(s) designated as minimum;
 	#dLRPs    = apply(post.dt[,match(minYr,yrs),drop=FALSE],1,min); ## across years therefore 1000 mins (old method)
 	dLRPs    = Dmin
-	dLRPci   = quantile(dLRPs,probs=c(0.025,0.5,0.975))
+	dLRPci   = quantile(dLRPs,probs=quants3)
 	dLRP     = median(dLRPs)
 
 	#dUSRs    = apply(post.dt[,match(minYr,yrs),drop=FALSE],1,function(x){2*min(x)}); ## across years therefore 1000 mins (old method)
 	dUSRs    = 2 * dLRPs
-	dUSRci   = quantile(dUSRs,probs=c(0.025,0.5,0.975))
+	dUSRci   = quantile(dUSRs,probs=quants3)
 	dUSR     = median(dUSRs)
 	collectHRP = c(collectHRP, "dLRPs", "dLRP", "dLRPci", "dUSRs", "dUSR", "dUSRci")
 
@@ -95,9 +95,10 @@ calcHRP = function(A, aveYr, minYr=NULL, Burn=0, Thin=1)
 	mcaveft    = A$mc.ft[,is.element(yr,aveYr)]
 	colnames(mcaveft) = yr[is.element(yr,aveYr)]
 	post.aveft = as.data.frame(window(mcmc(mcaveft),start=Burn+1,thin=Thin))  ## 1000 samples of Ft over N years for averaging
+	post.aft   = apply(post.aveft,1,function(x){mean(x)})                     ## 1000 averages over the averaging period
 	post.aveut = 1. - exp(-post.aveft)                                        ## 1000 samples of ut over N years for averaging
 	post.aut   = apply(post.aveut,1,function(x){mean(x)})                     ## 1000 averages over the averaging period
-	collectHRP = c(collectHRP, "post.aveft", "post.aveut", "post.aut")
+	collectHRP = c(collectHRP, "post.aveft", "post.aft", "post.aveut", "post.aut")
 
 	for (i in collectHRP) 
 		eval(parse(text=paste0("HRP.list[[\"",i,"\"]] = ",i)))

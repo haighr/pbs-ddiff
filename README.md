@@ -1,4 +1,4 @@
-## PBSddiff: GUI control for delay-difference output from iSCAM##
+## PBSddiff: GUI control for delay-difference output from iSCAM ##
 
 **PBSddiff** contains R code for GUI control of iSCAM delay-difference model output for multiple scenarios. The code was originally created by Chris Grandin (PBS) for a Pacific Cod (*Gadus macrocephalus* ) assessment, hence the prefix `pcod`, and subsequently adapted by Rowan Haigh (PBS) and Paul Starr (CGRCS) for use in stock assessments of Shortspine Thornyhead [1] (*Sebastolubus alascanus*) and Walleye Pollock (*Theragra chalcogramma*). The repository is set up to mimic an R package source repository; however, it currently does not meet requirements for building an R package.
 

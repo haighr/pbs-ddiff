@@ -13,7 +13,7 @@
 
 table.mcmc.mpd <- function(mcmcData,
                            burnin          = 0,
-                           probs           = c(0.025,0.5,0.975),
+                           probs           = quants3,
                            mpdData         = NULL,
                            tableName       = NULL,
                            colLabels       = NULL,
@@ -103,7 +103,7 @@ table.mcmc.mpd <- function(mcmcData,
 table.projections <- function(use.historic=FALSE){
 	dd   <- A$mcproj #read.table(file=fn, head=T)
 	tac  <- unique(dd$TAC)
-	quan <- c(0.025, 0.25, 0.5, 0.75, 0.975)
+	quan <- quants5
 	med  <- 0.5
 	
 	#Values that do not change with TAC
@@ -128,14 +128,14 @@ table.projections <- function(use.historic=FALSE){
 		CtlPts_quan=rbind(CtlPts_quan,c(ctlnames[jj],quantile(dd[,i], na.rm=T,quan)))
 	}
 	### RH Field names for projections
-	fnBp = paste0("B",A$projYr)
-	fnFp = paste0("F",A$projYr-1)
-	fnBpBc = paste0("B",A$projYr[1],"B",A$currYr)
-	fnFpFc = paste0("F",(A$projYr-1)[1],"F",A$currYr-1)
-	fnBpBm = paste0("B",A$projYr[1],"BMSY")
-	fnBpBm8 = paste0("B",A$projYr[1],"BMSY80")
-	fnBpBm4 = paste0("B",A$projYr[1],"BMSY40")
-	fnFpFm  = paste0("F",(A$projYr-1)[1],"FMSY")
+	fnBp = paste0("B",A$projYr[1:Nproj])
+	fnFp = paste0("F",A$projYr[1:Nproj]-1)
+	fnBpBc = paste0("B",A$projYr[1:Nproj][1],"B",A$currYr)
+	fnFpFc = paste0("F",(A$projYr[1:Nproj]-1)[1],"F",A$currYr-1)
+	fnBpBm = paste0("B",A$projYr[1:Nproj][1],"BMSY")
+	fnBpBm8 = paste0("B",A$projYr[1:Nproj][1],"BMSY80")
+	fnBpBm4 = paste0("B",A$projYr[1:Nproj][1],"BMSY40")
+	fnFpFm  = paste0("F",(A$projYr[1:Nproj]-1)[1],"FMSY")
 	
 	#Values that change with TAC
 	for(i in tac){
@@ -154,11 +154,11 @@ table.projections <- function(use.historic=FALSE){
 		BprojBMSY40 <- quantile(d[,fnBpBm4],na.rm=T,med) # Bproj/04BMSY
 		FprojFMSY   <- quantile(d[,fnFpFm],na.rm=T,med)  # Fproj/FMSY
 		if (use.historic) {
-			BprojBmin   <- quantile(d[,paste0("B",A$projYr[1],"Bmin")],na.rm=T,med)          # Bproj/B1971
-			BprojBAvg_S <- quantile(d[,paste0("B",A$projYr[1],"BAvg_S")],na.rm=T,med)        # Bproj/BAvg 1956-2004
-			BprojBAvg_L <- quantile(d[,paste0("B",A$projYr[1],"BAvg_L")],na.rm=T,med)        # Bproj/BAvg 1956-2012
-			FprojFAvg_S <- quantile(d[,paste0("F",(A$projYr-1)[1],"FAvg_S")], na.rm=T,med)   # Fproj/FAvg 1956-2004
-			FprojFAvg_L <- quantile(d[,paste0("F",(A$projYr-1)[1],"FAvg_L")],na.rm=T,med)    # Fproj/FAvg 1956-2012
+			BprojBmin   <- quantile(d[,paste0("B",A$projYr[1:Nproj][1],"Bmin")],na.rm=T,med)          # Bproj/B1971
+			BprojBAvg_S <- quantile(d[,paste0("B",A$projYr[1:Nproj][1],"BAvg_S")],na.rm=T,med)        # Bproj/BAvg 1956-2004
+			BprojBAvg_L <- quantile(d[,paste0("B",A$projYr[1:Nproj][1],"BAvg_L")],na.rm=T,med)        # Bproj/BAvg 1956-2012
+			FprojFAvg_S <- quantile(d[,paste0("F",(A$projYr[1:Nproj]-1)[1],"FAvg_S")], na.rm=T,med)   # Fproj/FAvg 1956-2004
+			FprojFAvg_L <- quantile(d[,paste0("F",(A$projYr[1:Nproj]-1)[1],"FAvg_L")],na.rm=T,med)    # Fproj/FAvg 1956-2012
 		}
 		#Quantiles
 		Bprojq <- round(apply(d[,fnBp,drop=F],2,quantile,quan,na.rm=T),1)  # Biomass in projected year
@@ -252,11 +252,11 @@ table.decision <- function(use.historic=FALSE, useHRP=FALSE, minYr, aveYr){
 
 	### RH Field names for projections
 	fnBc = paste0("B",A$currYr)      ## Biomass -- current year
-	fnBp = paste0("B",A$projYr)      ## Biomass -- projected years
+	fnBp = paste0("B",A$projYr[1:Nproj])      ## Biomass -- projected years
 	fnFc = paste0("F",A$currYr-1)    ## Fishing mortality -- current year
-	fnFp = paste0("F",A$projYr-1)    ## Fishing mortality -- projected years
+	fnFp = paste0("F",A$projYr[1:Nproj]-1)    ## Fishing mortality -- projected years
 	fnUc = paste0("U",A$currYr-1)    ## Harvest rate -- current year
-	fnUp = paste0("U",A$projYr-1)    ## Harvest rate -- projected years
+	fnUp = paste0("U",A$projYr[1:Nproj]-1)    ## Harvest rate -- projected years
 	fnB0 = "B0"                      ## Equilibrium unfished biomass
 	fnBm = "BMSY"                    ## Biomass at MSY
 	fnUm = "UMSY"                    ## Harvest rate at MSY
@@ -264,8 +264,8 @@ table.decision <- function(use.historic=FALSE, useHRP=FALSE, minYr, aveYr){
 	if (useHRP) Pout = c("P_Bt>LRP","P_Bt>USR","P_Bt>Bavg",paste0("P_Bt>B",A$currYr),"P_ut>uavg")
 	else Pout = c("P_Bt>0.4Bmsy","P_Bt>0.8Bmsy","P_Bt>Bmsy","P_Bt>0.2B0","P_Bt>0.4B0",paste0("P_Bt>B",A$currYr),"P_ut>umsy")
 
-	dtable = array(NA,dim=c(length(tac),length(c(A$currYr,A$projYr)),length(Pout)), 
-		dimnames=list(tac,c(A$currYr,A$projYr),Pout))
+	dtable = array(NA,dim=c(length(tac),length(c(A$currYr,A$projYr[1:Nproj])),length(Pout)), 
+		dimnames=list(tac,c(A$currYr,A$projYr[1:Nproj]),Pout))
 
 	if (useHRP){
 		if (missing(minYr) || missing(aveYr))
@@ -292,7 +292,7 @@ table.decision <- function(use.historic=FALSE, useHRP=FALSE, minYr, aveYr){
 	## Values that change with TAC
 	for(i in tac){
 		ii  = as.character(i)
-		j   = c(A$currYr,A$projYr)
+		j   = c(A$currYr,A$projYr[1:Nproj])
 		jj  = as.character(j)
 		jjj = c(fnBc,fnBp)
 

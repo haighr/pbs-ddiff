@@ -54,8 +54,15 @@ modelDir = "C:/Users/haighr/Files/Archive/Bat/"
 ##              this directory will be added to the path seen by R's Sys.getenv()["PATH"]
 
 options(stringsAsFactors=FALSE)
-# make warnings print out when they occur instead of at the end
+## make warnings print out when they occur instead of at the end
 options(warn=1) 
+if (!exists("usingSweave",envir=.GlobalEnv) || !usingSweave) {
+	## Standardise the quantiles to avoid confusion
+	quants3 = c(0.05, 0.50, 0.95)
+	quants5 = c(0.05, 0.25, 0.50, 0.75, 0.95)
+	## Choose the number of projection years (max=5)
+	Nproj = 2
+}
 
 # Runtime stats constants for plotting
 .MAXGRAD <- 0.0001
@@ -206,11 +213,12 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
   assign("plotType","png",envir=.GlobalEnv)
   # Set plot globals
   # mt variables control the management target line
-  assign("mtLineColor","green4",envir=.GlobalEnv)   ## Upper Stock Reference
-  assign("lrpLineColor","red",envir=.GlobalEnv)    ## Lower/Limit Reference Point
+  assign("mtLineColor","#009E73",envir=.GlobalEnv)   ## Upper Stock Reference (colour-blind bluegreen)
+  assign("lrpLineColor","#CC79A7",envir=.GlobalEnv)  ## Lower/Limit Reference Point (colour-blind redpurple)
   assign("mtLineType",3,envir=.GlobalEnv)  
   assign("mtLineWidth",3,envir=.GlobalEnv)  
-  assign("mpdLineColor","blue",envir=.GlobalEnv)
+  #assign("mpdLineColor","#0072B2",envir=.GlobalEnv)  ## MPD lines (colour-blind blue) a bit too dark?
+  assign("mpdLineColor","#56B4E9",envir=.GlobalEnv)  ## MPD lines (colour-blind skyblue) a bit too light?
   .setBurnThin(silent=silent, gui=gui)
 }
 
@@ -374,6 +382,7 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
 .doPlots <- function(){
   # val is the value object from GetWinVal()
   val <- getWinVal()
+  if (saveon) tput(val) ## store the current val in .PBSmodEnv for use by saveFig
   pType <- val$viewPlotType
   .setBurnThin()
   oldpar <- par( no.readonly=TRUE )
@@ -526,9 +535,15 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
     }else if(pType=="sBench" && delaydiff==1){
       if(nyr>=2012) {fig.Benchmarks()
       }else cat("No control point plot for 2005 bridging analyses\n")
-     }else if(pType=="sCtlPtsBox" && delaydiff==0){
+    }else if(pType=="sFmax" && delaydiff==1){
+      fig.Fdensity(scenario = scenarioCurr,
+      opList  = opList,
+      cribtab = cribtab,
+      sensfld = "sens",
+      type    = "box")
+    }else if(pType=="sCtlPtsBox" && delaydiff==0){
          cat("No control point plot for age-structured model\n")
-   }else if(pType=="sMSYCtlPts" && delaydiff==0){
+    }else if(pType=="sMSYCtlPts" && delaydiff==0){
       cat("No control point plot for age-structured model\n")
     }else if(pType=="sHistCtlPts" && delaydiff==0){
         cat("No control point plot for age-structured model\n")
@@ -665,8 +680,7 @@ assignGlobals <- function(scenario=1, silent=FALSE, gui=TRUE){
   cat("Writing tables\n")
   cat("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")
   if(delaydiff && nyr>=2012){
-    #quantProbs <- c(0.025,0.5,0.975)
-    quantProbs <- c(0.05,0.5,0.95) ## SST+WAP
+    quantProbs <- quants3 ## SST & WAP
     weightScale <- 1000.0
 debug = F; if (!debug) {
     try(table.projections(), silent=silent)
@@ -908,7 +922,7 @@ debug = F; if (!debug) {
     fig.depletion.mpd(ylimit=val$depletionYlim, useMaxYlim=val$maxDepletionYlim, useHRP=val$useHRP, minYr=val$minYr, aveYr=val$aveYr)
   ### Biomass MCMC with MPD overlay
   if(exists("fig.b"))
-    fig.b(includeMPD=T, ylimit=val$biomassYlim, useMaxYlim=val$maxBiomassYlim)
+    fig.b(includeMPD=T, ylimit=val$biomassYlim, useMaxYlim=val$maxBiomassYlim, useHRP=val$useHRP, minYr=val$minYr, aveYr=val$aveYr, tac=val$currTAC)
   ### Depletion MCMC with MPD overlay 
   if(exists("fig.c"))
     fig.c(includeMPD=T, ylimit=val$depletionYlim, useMaxYlim=val$maxDepletionYlim, useHRP=val$useHRP, minYr=val$minYr, aveYr=val$aveYr)

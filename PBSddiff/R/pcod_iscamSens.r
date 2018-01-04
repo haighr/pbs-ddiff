@@ -119,7 +119,7 @@ fig.base.vs.sens <- function(sensitivityGroup=NULL, whichPlot="biomass", useHRP=
 		sensyr <- baseRep$yr
 		mcbt <- baseRep$mc.sbt[,1:Nyears]/1000
 		post.bt <- as.data.frame(window(mcmc(mcbt),start=Burn+1,thin=Thin))
-		MaxBt <- apply(post.bt,2,quantile,probs=c(0.025,0.5,0.975))
+		MaxBt <- apply(post.bt,2,quantile,probs=quants3)
 		MaxBt <- max(MaxBt)
 #browser();return()
 		for(scenario in isens){
@@ -134,16 +134,16 @@ fig.base.vs.sens <- function(sensitivityGroup=NULL, whichPlot="biomass", useHRP=
 			iBurn  = opList[[i]][[4]]$mc.burn
 			mcbt <- opList[[scenario]][[4]]$mc.sbt[,1:Nyears]/1000
 			post.bt <- as.data.frame(window(mcmc(mcbt),start=iBurn+1,thin=Thin))
-			ScBt <- apply(post.bt,2,quantile,probs=c(0.025,0.5,0.975))
+			ScBt <- apply(post.bt,2,quantile,probs=quants3)
 			if(max(ScBt) > MaxBt) MaxBt <- max(ScBt)
 		}
 		mcbo <- baseRep$mc$bo/1000
 		post.bo <- as.data.frame(window(mcmc(mcbo),start=Burn+1,thin=Thin))
-		boci <- apply(post.bo,2,quantile,probs=c(0.025,0.5,0.975))
+		boci <- apply(post.bo,2,quantile,probs=quants3)
 
 		mcbt <- baseRep$mc.sbt[,1:Nyears]/1000
 		post.bt <- as.data.frame(window(mcmc(mcbt),start=Burn+1,thin=Thin))
-		btci <- apply(post.bt,2,quantile,probs=c(0.025,0.5,0.975))
+		btci <- apply(post.bt,2,quantile,probs=quants3)
 #browser();return()
 		if(usingSweave || val$maxBiomassSensYlim){
 			yUpperLimit <- 1.2*MaxBt
@@ -178,10 +178,10 @@ fig.base.vs.sens <- function(sensitivityGroup=NULL, whichPlot="biomass", useHRP=
 			iBurn  = opList[[i]][[4]]$mc.burn
 			mcbo <- opList[[i]][[4]]$mc$bo/1000
 			post.bo <- as.data.frame(window(mcmc(mcbo),start=iBurn+1,thin=Thin))
-			boci <- apply(post.bo,2,quantile,probs=c(0.025,0.5,0.975))
+			boci <- apply(post.bo,2,quantile,probs=quants3)
 			mcbt <- opList[[i]][[4]]$mc.sbt[,1:Nyears]/1000
 			post.bt <- as.data.frame(window(mcmc(mcbt),start=iBurn+1,thin=Thin))
-			btci <- apply(post.bt,2,quantile,probs=c(0.025,0.5,0.975))
+			btci <- apply(post.bt,2,quantile,probs=quants3)
 			color <- color + 1
 			colors <- c(colors,color)
 
@@ -243,7 +243,7 @@ fig.base.vs.sens <- function(sensitivityGroup=NULL, whichPlot="biomass", useHRP=
 			minYr  = yr[match(min(med.bt),med.bt)]  ## overrides GUI value or user's value
 
 			LRPs = apply(post.dt[,match(minYr,yr),drop=FALSE],1,min); ## across years therefore 1000 mins
-			LRPci = quantile(LRPs,probs=c(0.025,0.5,0.975))
+			LRPci = quantile(LRPs,probs=quants3)
 			LRP = median(LRPs)
 #browser();return()
 			USR = 2 * LRP
@@ -256,7 +256,7 @@ fig.base.vs.sens <- function(sensitivityGroup=NULL, whichPlot="biomass", useHRP=
 			post.dt <- as.data.frame(window(mcmc(mcdt),start=Burn+1,thin=Thin))
 			legtxt =  as.expression(c(bquote(Ref:~0.4*italic(B)[0])))
 		}
-		dtci    <- apply(post.dt,2,quantile,probs=c(0.025,0.5,0.975))
+		dtci    <- apply(post.dt,2,quantile,probs=quants3)
 		if(usingSweave || val$maxDepletionSensYlim){
 			yUpperLimit <- 1.2*max(dtci)
 		} else {
@@ -297,12 +297,12 @@ fig.base.vs.sens <- function(sensitivityGroup=NULL, whichPlot="biomass", useHRP=
 				mcbt = opList[[i]][[4]]$mc.sbt[,1:Nyears]
 				post.bt = as.data.frame(window(mcmc(mcbt),start=iBurn+1,thin=Thin))
 				post.dt = t(apply(post.bt,1,function(x){x/mean(x[match(aveYr,yr)])}))
-				dtci    <- apply(post.dt,2,quantile,probs=c(0.025,0.5,0.975))
+				dtci    <- apply(post.dt,2,quantile,probs=quants3)
 			} else {
 				mcdt <- opList[[i]][[4]]$mc.sbdepletion[,1:Nyears]
 				post.dt  <- as.data.frame(window(mcmc(mcdt),start=iBurn+1,thin=Thin))
 			}
-			dtci <- apply(post.dt,2,quantile,probs=c(0.025,0.5,0.975))
+			dtci <- apply(post.dt,2,quantile,probs=quants3)
 			color <- color + 1				  
 			colors <- c(colors,color)
 
@@ -358,7 +358,7 @@ fig.base.vs.sens <- function(sensitivityGroup=NULL, whichPlot="biomass", useHRP=
 
 		mc <- baseRep$mc.rt/1000
 		mc.rt <- as.data.frame(window(mcmc(mc),start=Burn+1,thin=Thin)) 
-		rt <- apply(mc.rt,2,quantile,probs=c(0.025,0.5,0.975))
+		rt <- apply(mc.rt,2,quantile,probs=quants3)
 
 		if(usingSweave || val$maxRecruitmentSensYlim){
 			yUpperLimit <- ymax
@@ -389,7 +389,7 @@ fig.base.vs.sens <- function(sensitivityGroup=NULL, whichPlot="biomass", useHRP=
 			ryr   <- opList[[i]][[4]]$yr[(1+sage):rnyr]
 			mc    <- opList[[i]][[4]]$mc.rt/1000
 			mc.rt <- as.data.frame(window(mcmc(mc),start=iBurn+1,thin=Thin)) 
-			rt    <- apply(mc.rt,2,quantile,probs=c(0.025,0.5,0.975))
+			rt    <- apply(mc.rt,2,quantile,probs=quants3)
 			color <- color + 1
 			colors<- c(colors,color)
 
@@ -672,37 +672,6 @@ fig.base.vs.sens <- function(sensitivityGroup=NULL, whichPlot="biomass", useHRP=
 		saveFig(filename)
 		assign("figDir",figDir.curr,envir=.GlobalEnv)
 	}
-}
-
-### Redefine boxplot to show quantiles (RH 150910)
-### http://r.789695.n4.nabble.com/Box-plot-with-5th-and-95th-percentiles-instead-of-1-5-IQR-problems-implementing-an-existing-solution-td3456123.html
-myboxplot.stats <- function (x, coef=NULL, do.conf=TRUE, do.out=TRUE)
-{
-  nna <- !is.na(x)
-  n <- sum(nna)
-  stats <- quantile(x, c(.05,.25,.5,.75,.95), na.rm = TRUE)
-  iqr <- diff(stats[c(2, 4)])
-  out <- x < stats[1] | x > stats[5]
-  conf <- if (do.conf)
-    stats[3] + c(-1.58, 1.58) * diff(stats[c(2, 4)])/sqrt(n)
-  list(stats = stats, n = n, conf = conf, out = x[out & nna])
-} 
-
-boxcode = deparse(boxplot.default)
-boxcode = gsub("boxplot\\.stats","myboxplot.stats",boxcode)
-eval(parse(text=c("qboxplot=",boxcode)))
-
-quantBox = function (x, use.cols = TRUE, ...) ## taken from boxplot.matrix
-{
-	if (rev(class(x))[1]=="matrix") {
-		groups <- if (use.cols) 
-			split(x, rep.int(1L:ncol(x), rep.int(nrow(x), ncol(x))))
-		else split(x, seq(nrow(x)))
-		if (length(nam <- dimnames(x)[[1 + use.cols]])) 
-		names(groups) <- nam
-		qboxplot(groups, ...)
-	}
-	else qboxplot(x, ...)
 }
 
 updateSG = function(){

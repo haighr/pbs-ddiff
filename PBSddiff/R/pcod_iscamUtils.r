@@ -90,14 +90,6 @@ mcmc2 = function (data = NA, start = 1, end = numeric(0), thin = 1)
 	data
 }
 
-## Taken from PBStools
-.flush.cat = function (...)
-{
-    cat(...)
-    flush.console()
-    invisible()
-}
-
 renderVals = function(..., simplify=FALSE)
 {
 	dots=list(...)
@@ -120,4 +112,44 @@ renderVals = function(..., simplify=FALSE)
 	}
 	if (simplify && length(out)==1) out = out[[1]]
 	return(out)
+}
+
+## Taken from PBStools
+.flush.cat = function (...)
+{
+    cat(...)
+    flush.console()
+    invisible()
+}
+
+## Redefine boxplot to show quantiles (RH 150910)
+## Function `quantBox' available in PBStools but repeated here to obviate need for this package
+## http://r.789695.n4.nabble.com/Box-plot-with-5th-and-95th-percentiles-instead-of-1-5-IQR-problems-implementing-an-existing-solution-td3456123.html
+myboxplot.stats <- function (x, coef=NULL, do.conf=TRUE, do.out=TRUE)
+{
+  nna <- !is.na(x)
+  n <- sum(nna)
+  stats <- quantile(x, quants5, na.rm = TRUE)  ## make sure quants5 is defined in pcod_iscam.r or Appendix Rnw
+  iqr <- diff(stats[c(2, 4)])
+  out <- x < stats[1] | x > stats[5]
+  conf <- if (do.conf)
+    stats[3] + c(-1.58, 1.58) * diff(stats[c(2, 4)])/sqrt(n)
+  list(stats = stats, n = n, conf = conf, out = x[out & nna])
+} 
+
+boxcode = deparse(boxplot.default)
+boxcode = gsub("boxplot\\.stats","myboxplot.stats",boxcode)
+eval(parse(text=c("qboxplot=",boxcode)))
+
+quantBox = function (x, use.cols = TRUE, ...) ## taken from boxplot.matrix
+{
+	if (rev(class(x))[1]=="matrix") {
+		groups <- if (use.cols) 
+			split(x, rep.int(1L:ncol(x), rep.int(nrow(x), ncol(x))))
+		else split(x, seq(nrow(x)))
+		if (length(nam <- dimnames(x)[[1 + use.cols]])) 
+		names(groups) <- nam
+		qboxplot(groups, ...)
+	}
+	else qboxplot(x, ...)
 }

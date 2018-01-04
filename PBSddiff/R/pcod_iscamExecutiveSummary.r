@@ -45,15 +45,15 @@ fig.b <- function(includeMPD=FALSE, ylimit=6, useMaxYlim=T, useHRP=F, minYr, ave
 			Bcurr   <- post.dmcmc[,paste0("B",A$currYr),drop=FALSE]/1000.
 		} else { 
 			Bmin=Bmean=bmin=bmean=NULL
-			Bcurr = post.dmcmc[,paste0("B",c(A$currYr,A$projYr))]/1000. ## current year is now in post.bt
+			Bcurr = post.dmcmc[,paste0("B",c(A$currYr,A$projYr[1:Nproj]))]/1000. ## current year is now in post.bt
 		}
-		Bcurr.ci <-  sapply(Bcurr,quantile,c(0.025,0.5,0.975),na.rm=T)  ## current and projected biomass
+		Bcurr.ci <-  sapply(Bcurr,quantile,quants3,na.rm=T)  ## current and projected biomass
 	}
 	
 	# Spawning stock virgin biomass
 	mcbo <- (A$mc$bo)/1000.
 	post.bo <- as.data.frame(window(mcmc(mcbo),start=Burn+1,thin=Thin))
-	boci <- apply(post.bo,2,quantile,probs=c(0.025,0.5,0.975))
+	boci <- apply(post.bo,2,quantile,probs=quants3)
 
 	if (useHRP){
 		if (missing(minYr) || missing(aveYr))
@@ -64,12 +64,6 @@ fig.b <- function(includeMPD=FALSE, ylimit=6, useMaxYlim=T, useHRP=F, minYr, ave
 		HRPs = calcHRP(A=A, aveYr=aveYr, Burn=Burn)  ## one function to collect all of the stuff below
 		unpackList(HRPs)
 #browser();return()
-
-		## Calculate avergae biomass as the median 1000 MCMC means
-		#mcavebt    = A$mc.sbt[,match(aveYr,yr)]/1000. ## convert to kt
-		#post.avebt = as.data.frame(window(mcmc(mcavebt),start=Burn+1,thin=Thin))  ## 1000 samples of Bt over N years for averaging
-		#post.abt   = apply(post.avebt,1,function(x){mean(x)})                     ## 1000 averages over the averaging period
-		#avebt      = median(post.abt)                                             ## median of the 1000 averages
 	}
 	else {
 		avebt=NULL
@@ -84,7 +78,7 @@ fig.b <- function(includeMPD=FALSE, ylimit=6, useMaxYlim=T, useHRP=F, minYr, ave
 	}
 	else
 		post.bt <- as.data.frame(window(mcmc(mcbt),start=Burn+1,thin=Thin))
-	btci <- apply(post.bt,2,quantile,probs=c(0.025,0.5,0.975))
+	btci <- apply(post.bt,2,quantile,probs=quants3)
 	if(useMaxYlim){
 		yUpperLimit <- max(btci,(A$sbt)/1000)
 	} else {
@@ -92,23 +86,24 @@ fig.b <- function(includeMPD=FALSE, ylimit=6, useMaxYlim=T, useHRP=F, minYr, ave
 	}
 	if(A$delaydiff==1) 
 		btci <- cbind(btci,Bcurr.ci[,-1]) # add the projection year from the projection model (exclude current year)
-	projYrs = c(A$currYr,A$projYr)
-	allYrs  = A$yr[1]:rev(A$projYr)[1]; nyrs = length(allYrs)
+	projYrs = c(A$currYr,A$projYr[1:Nproj])
+	allYrs  = A$yr[1]:rev(A$projYr[1:Nproj])[1]; nyrs = length(allYrs)
 	ryear   = nyear + 1 ## number of reconstruction (not projection) years
 	xlim = range(c(A$yr,projYrs))
 
 	if (!simplify)  par(mar=c(3,4,2,1), mgp=c(2.5,0.5,0))
 	matplot(A$yrs,t(btci[,1:ryear]),type="l",col=1,lty=c(2,1,2), lwd=2,ylim=c(0,yUpperLimit), xlim=xlim,
-		ylab=ifelse(simplify,"","Biomass (thousand t)"), xlab=ifelse(simplify,"",""), main=ifelse(simplify,"","Biomass"), las=1, cex.axis=1.2, cex.lab=1.5)
+		ylab=ifelse(simplify,"","Biomass (thousand tonnes)"), xlab=ifelse(simplify,"",""), main=ifelse(simplify,"","Biomass"), las=1, cex.axis=1.2, cex.lab=1.5)
 #browser();return()
 	if (!simplify) mtext("Year",side=1,line=2,cex=1.5)
-	abline(h=avebt, col=1, lty=8, lwd=1)
+	abline(h=avebt, col=1, lty=3, lwd=2)
 	xx <- c(A$yrs,rev(A$yrs))
 	yy <- c(btci[1,1:ryear],rev(btci[3,1:ryear]))
 	shade <- getShade(1,opacity)
 	polygon(xx,yy,density=NA,col=shade)
 	arrows(A$yrs[1]-0.8,boci[1],A$yrs[1]-0.8,boci[3],col="green4", code=0, lwd=2)
 	points(A$yrs[1]-0.8,boci[2],cex=1.5,col=1,pch=21,bg="green")
+#browser();return()
 
 	#projection year
 	lines(projYrs,  btci[2,ryear:nyrs], col=2, lwd=2)
@@ -119,21 +114,20 @@ fig.b <- function(includeMPD=FALSE, ylimit=6, useMaxYlim=T, useHRP=F, minYr, ave
 	shade <- getShade(2,opacity)
 	polygon(xxp,yyp,density=NA,col=shade)
 	#if(A$delaydiff==1) legend("topright",c("Median Bmin","Median BAvg 1956-2004"),lty=c(2,2),pch=c(-1,-1),lwd=c(1,1),col=c(2,3),bty="n")
-#browser();return()
 
 	legtxt =c(
-		paste0("Bt (", A$yr[1],"-",rev(A$yr)[1], ")"),
+		paste0("Bt (", A$yrs[1],"-",rev(A$yrs)[1], ")"),
 		paste0("Bt proj. (", projYrs[1],"-",rev(projYrs)[1], ")"),
 		paste0("Bavg (", aveYr[1],"-",rev(aveYr)[1], ")"),
-		paste0("B0 (", A$yr[1], ")"),
+		paste0(ifelse(useHRP,"Binit","B0")," (", A$yr[1], ")"),
 		paste0("Bcurr (", A$currYr, ")")
 		)
-	lty = c(1,1,2,NA,NA); pch=c(-1,-1,-1,21,21); lwd=c(2,2,1,1,1); col=c(1,2,1,1,2); pt.bg=c(NA,NA,NA,"green","yellow")
+	lty = c(1,1,3,NA,NA); pch=c(-1,-1,-1,21,21); lwd=c(2,2,2,1,1); col=c(1,2,1,1,2); pt.bg=c(NA,NA,NA,"green","yellow")
 
 	if(includeMPD){
 		Bt<-A$sbt 
 		lines(A$yrs,Bt/1000,type="l",col=mpdLineColor,lty=1, lwd=2,ylim=c(0,yUpperLimit), las=1, xlab="",ylab="")
-		legtxt = c(legtxt, paste0("Bt MPD (", A$yr[1],"-",rev(A$yr)[1], ")"))
+		legtxt = c(legtxt, paste0("Bt MPD (", A$yrs[1],"-",rev(A$yrs)[1], ")"))
 		lty = c(lty,1); pch=c(pch,-1); lwd=c(lwd,2); col=c(col,mpdLineColor); pt.bg=c(pt.bg,NA)
 	}
 	points(A$currYr,Bcurr.ci[2,paste0("B",A$currYr)],pch=21,cex=1.5,col="red",bg="yellow")
@@ -151,7 +145,7 @@ fig.b <- function(includeMPD=FALSE, ylimit=6, useMaxYlim=T, useHRP=F, minYr, ave
 #browser();return()
 	if (!simplify) {
 		addScenLab(x=0.25)
-		saveFig("fig.spawning.biomass")
+		saveFig("fig.spawning.biomass", fun.call=match.call())
 	}
 }
 
@@ -205,7 +199,7 @@ fig.bt <- function(includeMPD=F,ylimit=150,useMaxYlim=T,opacity="20",includeCatc
 		cat("WARNING (fig.bt): No MCMCs generated for this scenario\n"); return(invisible("No MCMC data")) }
 	mcbt <- (A$mc.tbt)/1000
 	post.bt <- as.data.frame(window(mcmc(mcbt),start=Burn+1,thin=Thin))
-	btci <- apply(post.bt,2,quantile,probs=c(0.025,0.5,0.975))
+	btci <- apply(post.bt,2,quantile,probs=quants3)
 	if(useMaxYlim){
 		yUpperLimit <- max(btci,(A$tbt)/1000)
 	}else{
@@ -289,8 +283,9 @@ fig.depletion.mpd <- function(ylimit=3.5, useMaxYlim=TRUE, useHRP=FALSE, minYr, 
 	saveFig("fig.depletion.mpd")
 }
 
-fig.c <- function(includeMPD=F, ylimit=3.5, useMaxYlim=T, useHRP=F, minYr, aveYr, opacity="20", ...){
-	# Spawning stock depletion
+## Spawning stock depletion
+fig.c <- function(includeMPD=F, ylimit=3.5, useMaxYlim=T, useHRP=F, minYr, aveYr, opacity="20", ...)
+{
 	simplify = usingSweave
 	adieu = if (simplify) invisible else function(){expandGraph(mfrow=c(1,1), new=FALSE)}
 	on.exit(adieu())
@@ -314,24 +309,8 @@ fig.c <- function(includeMPD=F, ylimit=3.5, useMaxYlim=T, useHRP=F, minYr, aveYr
 		HRPs = calcHRP(A=A, aveYr=aveYr, Burn=Burn)  ## one function to collect all of the stuff below
 		unpackList(HRPs)
 #browser();return()
-
-		## Calculate the depletion over the entire period
-		#mcbt    = A$mc.sbt[,1:nyear]
-		#post.bt = as.data.frame(window(mcmc(mcbt),start=Burn+1,thin=Thin))
-		## For each 1000 MCMCs, divide Bt (1967-2016) by the corresponding mean Bt (1967-2016 or shorter interval)
-		#post.dt = t(apply(post.bt,1,function(x){x/mean(x[match(aveYr,yr)])}))
-		#LRPs    = apply(post.dt[,match(minYr,yr),drop=FALSE],1,min); ## across years therefore 1000 mins
-		#LRPci   = quantile(LRPs,probs=c(0.025,0.5,0.975))
-		#LRP     = median(LRPs)
-		#USRs    = apply(post.dt[,match(minYr,yr),drop=FALSE],1,function(x){2*min(x)}); ## across years therefore 1000 mins
-		#USRci   = quantile(USRs,probs=c(0.025,0.5,0.975))
-		#USR     = median(USRs)
-		#USR     = 2 * LRP    ## same difference
-		#USRci   = 2 * LRPci  ## ditto
-#browser();return()
-		#mmY     =  median(minYr) ## median year of minimum biomass
 		legtxt =  as.expression(bquote(italic(B[t])/italic(B)[avg]))
-		legtxt  =  as.expression(c(legtxt, bquote(USR:2%*%LRP==.(show0(round(dUSR,2),2))), bquote(LRP:~italic(B[.(minYr)])/italic(B)[avg]==.(show0(round(dLRP,2),2)))))
+		legtxt  =  as.expression(c(legtxt, bquote(USR:2%*%LRP==.(show0(round(dUSR,2),2))), bquote(LRP:~italic(B)[min]/italic(B)[avg]==.(show0(round(dLRP,2),2)))))
 	} else {
 		dBt = A$sbt[1:nyear]/A$sbo ## MPD
 		mcdt <- A$mc.sbdepletion[,1:nyear]
@@ -346,16 +325,16 @@ fig.c <- function(includeMPD=F, ylimit=3.5, useMaxYlim=T, useHRP=F, minYr, aveYr
 	ddmcmc  <- A$mcproj 
 	dmcmc   <- subset(ddmcmc, TAC==0)   #take only the first tac from each posterior sample - the control points do not change with tac
 	post.dmcmc <- as.data.frame(window(mcmc(dmcmc),start=(Burn+1),thin=Thin))
-	Bcurr = post.dmcmc[,paste0("B",c(A$currYr,A$projYr))]
+	Bcurr = post.dmcmc[,paste0("B",c(A$currYr,A$projYr[1:Nproj]))]
 	if (useHRP)
 		Dcurr = apply(Bcurr,2,function(x,y){x/y}, y=post.abt)  ## divide Bcurr by Bavg
 	else 
 		Dcurr = apply(Bcurr,2,function(x,y){x/y}, y=post.dmcmc[,"B0"])  ## divide Bcurr by B0
-	Dcurr.ci <- apply(Dcurr,2,quantile,c(0.025,0.5,0.975),na.rm=T)  ## current and projected depletion
+	Dcurr.ci <- apply(Dcurr,2,quantile,quants3,na.rm=T)  ## current and projected depletion
 
 #browser();return()
 
-	dtci <- apply(post.dt,2,quantile,probs=c(0.025,0.5,0.975))
+	dtci <- apply(post.dt,2,quantile,probs=quants3)
 	dtci =  cbind(dtci,Dcurr.ci[,1]) ## add current year
 	if(useMaxYlim){
 		yUpperLimit <- max(dtci,dBt)
@@ -363,7 +342,9 @@ fig.c <- function(includeMPD=F, ylimit=3.5, useMaxYlim=T, useHRP=F, minYr, aveYr
 		yUpperLimit <- ylimit
 	}
 	if (!simplify) par(mar=c(3.5,4,2,0.5),mgp=c(2.2,0.5,0))
-	matplot(A$yrs, t(dtci[,1:nyrs]), type="n", col=1, lty=c(2,1,2), lwd=2, ylim=c(0,yUpperLimit), main=ifelse(simplify,"","Spawning Depletion"), xlab=ifelse(simplify,"","Year"), las=1, ylab=ifelse(simplify,"","Biomass depletion"), cex.lab=1.5, cex.axis=1.2)
+	txt.main = if (useHRP) "Biomass relative to average biomass" else "Spawning biomass depletion" 
+	txt.ylab = if (useHRP) as.expression(bquote(italic(B[t])/italic(B)[avg])) else as.expression(bquote(italic(B[t])/italic(B)[0]))
+	matplot(A$yrs, t(dtci[,1:nyrs]), type="n", col=1, lty=c(2,1,2), lwd=2, ylim=c(0,yUpperLimit), main=ifelse(simplify,"",txt.main), xlab=ifelse(simplify,"","Year"), las=1, ylab=ifelse(simplify,"",txt.ylab), cex.lab=1.5, cex.axis=1.2)
 	#abline(h=1); abline(v=2017)
 	#mcproj <- mcmc2(subset(A$mcproj, TAC==0), start=Burn+1, thin=Thin)
 	if (useHRP) {
@@ -398,7 +379,7 @@ fig.c <- function(includeMPD=F, ylimit=3.5, useMaxYlim=T, useHRP=F, minYr, aveYr
 	box()
 	if (!simplify) {
 		addScenLab(x=0.4)
-		saveFig("fig.depletion")
+		saveFig("fig.depletion", fun.call=match.call())
 	}
 }
 
@@ -426,33 +407,38 @@ fig.dmcmc <- function(ylimit=250, useMaxYlim=TRUE, ...){
 	on.exit(expandGraph(mfrow=c(1,1),new=FALSE))
 	if (!isScenMcmc()) {
 		cat("WARNING (fig.dmcmc): No MCMCs generated for this scenario\n"); return(invisible("No MCMC data")) }
-	sage<-A$sage
-	ryr <- yr[(1+sage):nyear]
+
+	## Divide by 1000 to get millions (assume input catch in tonnes and body weight in kg)
+	dfac = 1000.
+	lcol = c("#D55E00", "#009E73")  ## colour-blind vermillion, bluegreen
+	sage <- A$sage
+	ryr  <- yr[(1+sage):nyear]
 	#ryr <- yr
 	
-	mc <- A$mc.rt
-	mc.rt <- as.data.frame(window(mcmc(mc),start=Burn+1,thin=Thin)) 
-	rt <- apply(mc.rt,2,quantile,probs=c(0.025,0.5,0.975)) #gets quantiles for number of age 1 recruits
+	mc    <- A$mc.rt
+	mc.rt <- as.data.frame(window(mcmc(mc), start=Burn+1, thin=Thin)) 
+	rt    <- apply(mc.rt, 2, quantile, probs=quants3) #gets quantiles for number of age 1 recruits
 
 	if(useMaxYlim){
-		yUpperLimit <- max(rt)/1000 #
+		yUpperLimit <- max(rt)/dfac
 	}else{
 		yUpperLimit <- ylimit
 	}
-	if (!simplify)  par(mar=c(3,4,2,1), mgp=c(2.75,0.5,0))
+	if (!simplify)  par(mar=c(3,4,2,1), mgp=c(2.5,0.5,0))
 
-	plot(ryr, rt[2,]/1000, type="n", ylim=c(0,yUpperLimit), xlab="", ylab="Recruits (million)", main="Recruits", las=1, cex.lab=1.5, cex.axis=1.2) #divide by 1000 to get millions (assume input catch in tonnes and body weight in kg)
+	plot(ryr, rt[2,]/dfac, type="n", ylim=c(0,yUpperLimit), xlab="", ylab="Recruits (million)", main="Recruits", las=1, cex.lab=1.5, cex.axis=1.2, cex.main=1.75)
 	mtext("Year", side=1, line=2, cex=1.5)
+	axis(1, at=seq(1975,2015,10), tcl=-0.25, labels=FALSE)
 
-	abline(h=median(as.matrix(mc.rt))/1000, col=2, lty=2, lwd=2)
-	abline(h=mean(as.matrix(mc.rt))/1000, col=3, lty=2, lwd=2)
-	points(ryr, rt[2,]/1000, pch=20, cex=1.5) #divide by 1000 to get millions (assume input catch in tonnes and body weight in kg)
-	arrows(ryr, rt[1, ]/1000, ryr, rt[3,]/1000, code=3, angle=90, length=0.01)
+	abline(h=median(as.matrix(mc.rt))/dfac, col=lcol[1], lty=2, lwd=2)  ## colour-blind vermillion
+	abline(h=mean(as.matrix(mc.rt))/dfac,   col=lcol[2], lty=2, lwd=2)  ## colour-blind bluegreen
+	arrows(ryr, rt[1, ]/dfac, ryr, rt[3,]/dfac, code=3, angle=90, length=0.01, lwd=1.5)
+	points(ryr, rt[2,]/dfac, pch=20, cex=1.5, col="grey20")
 
 	##points(xp,A$nt[,1],pch=19,cex=1)
-	legend("topright",c("MCMC long-term median","MCMC long-term mean"),lty=c(2,2),pch=c(-1,-1),lwd=c(2,2),col=c(2,3),bty="n")
+	legend("topright", c("MCMC long-term median","MCMC long-term mean"), lty=c(2,2), pch=c(-1,-1), lwd=c(2,2), col=lcol, bty="n", seg.len=4)
 	addScenLab()
-	saveFig("fig.recruits.mcmc")
+	saveFig("fig.recruits.mcmc", fun.call=match.call())
 }
 
 #SPR status - fmsy
@@ -465,7 +451,7 @@ fig.e1 <- function(){
 	if (is.null(spr)) {
 		cat("WARNING (fig.e1): No spawner-per-recruit data available\n"); return(invisible("No SPR data")) }
 	post.spr <- as.data.frame(window(mcmc(spr),start=Burn+1,thin=Thin))
-	sprci <- apply(post.spr,2,quantile,probs=c(0.025,0.5,0.975))
+	sprci <- apply(post.spr,2,quantile,probs=quants3)
 
 	matplot(A$yr,t(sprci),type="l",col=c(2,1,2),lty=c(3,1,3), lwd=2, pch=c(-1, 0, 1),ylim=c(0,2)
 		,xlab="Year",ylab="(1-SPR)/(1-SPR at fmsy)")
@@ -485,7 +471,7 @@ fig.e2 <- function(){
 	if (is.null(spr)) {
 		cat("WARNING (fig.e2): No spawner-per-recruit data available\n"); return(invisible("No SPR data")) }
 	post.spr <- as.data.frame(window(mcmc(spr),start=Burn+1,thin=Thin))
-	sprci <- apply(post.spr,2,quantile,probs=c(0.025,0.5,0.975))
+	sprci <- apply(post.spr,2,quantile,probs=quants3)
 	
 	matplot(A$yr,t(sprci),type="l",col=c(2,1,2),lty=c(3,1,3), lwd=2, pch=c(-1, 0, 1),ylim=c(0,2)
 		,xlab="Year",ylab="(1-SPR)/(1-SPR at f40)")
@@ -515,7 +501,7 @@ fig.Fmcmc <- function(opacity="20", tac.use=600, ...){
 	#Fishing mortality - GEAR 1 ONLY
 	ft <- A$mc.ft #read.table("ccam.bt2",h=F)
 	post.ft <- as.data.frame(window(mcmc(ft),start=Burn+1,thin=Thin))
-	ftci <- apply(post.ft,2,quantile,probs=c(0.025,0.5,0.975))
+	ftci <- apply(post.ft,2,quantile,probs=quants3)
 
 	expandGraph(mfrow=c(1,1))
 	matplot(A$yr,t(ftci[, 1:length(A$yr)]),type="l",col=1,lty=c(2,1,2), lwd=2, pch=c(-1, 0, 1)
@@ -707,7 +693,7 @@ fig.j <- function()
 table.b <- function() {
 	mcbt <- A$mc.sbt
 	post.bt <- as.data.frame(window(mcmc(mcbt),start=Burn+1,thin=Thin))
-	btci <- t(apply(post.bt,2,quantile,probs=c(0.025,0.5,0.975)))
+	btci <- t(apply(post.bt,2,quantile,probs=quants3))
 	
 	filename <- paste(tabDir,"tableb_sbt.tex",sep="")
 	filenamecsv <- paste(tabDir,"tableb_sbt.csv",sep="")
@@ -730,7 +716,7 @@ table.c <- function() {
 	
 	mcdt <- A$mc.sbdepletion
 	post.dt  <- as.data.frame(window(mcmc(mcdt),start=Burn+1,thin=Thin))
-	dtci <- t(apply(post.dt,2,quantile,probs=c(0.025,0.5,0.975)))
+	dtci <- t(apply(post.dt,2,quantile,probs=quants3))
 	
 	filename<-paste(tabDir,"tablec_depletion.tex",sep="")
 	filenamecsv<-paste(tabDir,"tablec_depletion.csv",sep="")
@@ -751,7 +737,7 @@ table.c <- function() {
 table.d <- function() {	
 	mcrt <- A$mc.rt 
 	post.rt  <- as.data.frame(window(mcmc(mcrt),start=Burn+1,thin=Thin))
-	rtci <- t(apply(post.rt,2,quantile,probs=c(0.025,0.5,0.975)))
+	rtci <- t(apply(post.rt,2,quantile,probs=quants3))
 	
 	filename<-paste(tabDir,"tabled_recruits.tex",sep="")
 	filenamecsv<-paste(tabDir,"tabled_recruits.csv",sep="")
@@ -772,7 +758,7 @@ table.d <- function() {
 table.e1 <- function() {
 	spr <- A$mc.sprstatus_fmsy
 	post.spr <- as.data.frame(window(mcmc(spr),start=Burn+1,thin=Thin))
-	sprci <- t(apply(post.spr,2,quantile,probs=c(0.025,0.5,0.975)))
+	sprci <- t(apply(post.spr,2,quantile,probs=quants3))
 	
 	filename<-paste(tabDir,"tablee_sprfmsy_status.tex",sep="")
 	filenamecsv<-paste(tabDir,"tablee_sprfmsy_status.csv",sep="")
@@ -792,7 +778,7 @@ table.e1 <- function() {
 table.e2 <- function() {	
 	spr <- A$mc.sprstatus_f40
 	post.spr <- as.data.frame(window(mcmc(spr),start=Burn+1,thin=Thin))
-	sprci <- t(apply(post.spr,2,quantile,probs=c(0.025,0.5,0.975)))
+	sprci <- t(apply(post.spr,2,quantile,probs=quants3))
 	
 	filename<-paste(tabDir,"tablee_sprf40_status.tex",sep="")
 	filenamecsv<-paste(tabDir,"tablee_sprf40_status.csv",sep="")
@@ -815,7 +801,7 @@ table.f <- function() {
 	ct <- A$ct[1,]
 	cbt3 <- ct/bt3[, 1:length(A$yr)]
 	post.cbt3 <- as.data.frame(window(mcmc(cbt3),start=Burn+1,thin=Thin))
-	cbt3ci <- t(apply(post.cbt3,2,quantile,probs=c(0.025,0.5,0.975)))
+	cbt3ci <- t(apply(post.cbt3,2,quantile,probs=quants3))
 	
 	filename<-paste(tabDir,"tablef_exploitationFraction.tex",sep="")
 	filenamecsv<-paste(tabDir,"tablef_exploitationFraction.csv",sep="")
@@ -985,7 +971,7 @@ table.i <- function(){
   
   mcs <- A$mcRefPoints
   post.mcs <- as.data.frame(window(mcmc(mcs),start=Burn+1,thin=Thin))
-  mcsci <- t(apply(post.mcs,2,quantile,probs=c(0.025,0.5,0.975)))
+  mcsci <- t(apply(post.mcs,2,quantile,probs=quants3))
   ti <- mcsci
   ti <- rbind(ti[1:2, ], rep("", 3), ti[3:6, ], rep("", 3), ti[8:11, ], rep("", 3), ti[12:15, ])
   ti <- cbind(lbl, (ti))

@@ -240,7 +240,9 @@ loadScenario <- function(scenario, silent=FALSE){
       ## RH executable now projects 5 years but we want only 3 years. 
       ## Start collecting proj yrs 2 fields right of `TAC' and end collecting 3 fields left of `B0'
       ## For 5 proj yrs, end collecting 1 field left of `B0'
-      projflds  = eval(parse(text=paste0("projnames[",paste0(grep("^TAC$|^B0$",projnames)+c(2,-3),collapse=":"),"]")))
+      ## ***** maybe better to use all five and subset based on user's input of Nproj
+      #projflds  = eval(parse(text=paste0("projnames[",paste0(grep("^TAC$|^B0$",projnames)+c(2,-(6-Nproj)),collapse=":"),"]")))
+      projflds  = eval(parse(text=paste0("projnames[",paste0(grep("^TAC$|^B0$",projnames)+c(2,-1),collapse=":"),"]")))
       projYr = opList[[scenario]][[4]]$projYr  <<- as.numeric(gsub("B","",projflds))
       #opList[[scenario]][[4]]$yrs              <<- sort(unique(c(opList[[scenario]][[4]]$yrs,projYr)))
       #currYr = opList[[scenario]][[4]]$currYr  <<- rev(opList[[scenario]][[4]]$yr)[1]

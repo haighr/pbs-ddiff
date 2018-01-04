@@ -1,12 +1,22 @@
-saveFig <- function(filename){
-  # Save the currently plotted figure to disk
-  # in the 'figDir' folder with the name
-  # filename.plotType
-  if(saveon){
-    filename <- paste(figDir,filename,".",plotType,sep="")
-    savePlot(filename,type=plotType)
-    cat(paste("Saved figure ",filename,"...\n",sep=""))
-  }
+saveFig <- function(filename, fun.call=NULL)
+{
+	# Save the currently plotted figure to disk
+	# in the 'figDir' folder with the name
+	# filename.plotType
+	if(saveon){
+		filename <- paste(figDir,filename,".",plotType,sep="")
+		if (is.null(fun.call)) {
+			savePlot(filename,type=plotType)
+		} else {
+			assign("saveon",FALSE,envir=.GlobalEnv)
+			tget(val)
+			png(filename, width=7, height=7, units="in", res=400)
+			eval(fun.call)
+			dev.off()
+			assign("saveon",TRUE,envir=.GlobalEnv)
+		}
+		cat(paste("Saved figure ",filename,"...\n",sep=""))
+	}
 }
 
 fig.fishingMortality <- function(){
@@ -39,14 +49,14 @@ fig.RecAnomMCMC <- function(){
 		cat("WARNING (fig.RecAnomMCMC): No MCMCs generated for this scenario\n"); return(invisible("No MCMC data")) }
 	mc <- log(A$mc.RecDevs)
 	mc.recdev <- as.data.frame(window(mcmc(mc),start=Burn+1,thin=Thin)) 
-	recdev <- apply(mc.recdev,2,quantile,probs=c(0.025,0.5,0.975)) #gets quantiles 
+	recdev <- apply(mc.recdev,2,quantile,probs=quants3) #gets quantiles 
 	
 	#Get the observed anomalies scaled by estimates of dt
 	#mc_ap <- matrix(ncol=length(A$anom_obs), nrow=length(A$mc$dt))
 	#for(i in 1:length(A$mc$dt)) mc_ap[i,] <- A$anom_obs*A$mc$dt[i] #multiply the observed anomalies by the estimated mcmc values of the scalar dt
 	
 	#mc.anompred <- as.data.frame(window(mcmc(mc_ap),start=Burn+1,thin=Thin))
-	#anompred <- apply(mc.anompred,2,quantile,probs=c(0.025,0.5,0.975)) #gets quantiles 
+	#anompred <- apply(mc.anompred,2,quantile,probs=quants3) #gets quantiles 
 	
 	ylim = range(recdev)
 	plot(yr, recdev[2,], type="p", pch=20, lwd=2, ylim=ylim, ylab="log recruitment deviations", xlab="Year",las=1)
@@ -60,7 +70,7 @@ fig.RecAnomMCMC <- function(){
 	saveFig("fig.recruit.anomalies.mcmc")
 }
 
-fig.weightFit <- function(){ ## modified by RH (161222)
+fig.weightFit <- function(){ ## modified by RH (171123)
 	simplify = usingSweave
 	adieu = if (simplify) invisible else function(){expandGraph(mfrow=c(1,1), new=FALSE)}
 	on.exit(adieu())
@@ -75,29 +85,30 @@ fig.weightFit <- function(){ ## modified by RH (161222)
 	}
 	wsig  <- A$weight_sig
 	ylim=c(0,max(c(obsMW,A$annual_mean_wt[1:length(A$yr)], obsMW + wsig*obsMW)))
-	if (!simplify) par(mfrow=c(1,1), mar=c(4,4,2,0), oma=c(0.5,0.5,0.5,0.5), mgp=c(2.5,.5,0))
-	plot(wyrs,obsMW,type="p",pch=19,xlab=ifelse(simplify,"","Year"),ylab=ifelse(simplify,"","Annual mean weight (kg)"), ylim=ylim,
-		#main=ifelse(simplify,"","Mean weight"), xlim=c(A$yr[1],A$yr[length(A$yr)]), ylim=c(0,1.5*max(obsMW)), 
-		main=ifelse(simplify,"","Mean weight"), xlim=c(A$yr[1],A$yr[length(A$yr)]), , 
-		las=1, cex.axis=1.2, cex.lab=1.5, cex.main=1.5)
-	arrows(wyrs, obsMW + wsig*obsMW, wyrs, obsMW - wsig*obsMW, code=3, angle=90, length=0.04)
+
+	if (!simplify) par(mfrow=c(1,1), mar=c(3,4,2,0.5), oma=c(0,0,0,0), mgp=c(2.5,0.5,0))
+	plot(wyrs, obsMW, type="p", pch=19, cex=1.2, xlab="", ylab=ifelse(simplify,"","Annual mean weight (kg)"), ylim=ylim, main=ifelse(simplify,"","Mean weight"), xlim=c(A$yr[1],A$yr[length(A$yr)]), las=1, cex.axis=1.2, cex.lab=1.5, cex.main=1.75)
+	if (!simplify) mtext("Year", side=1, line=2, cex=1.5)
+	axis(1, at=seq(1975,2015,10), tcl=-0.25, labels=FALSE)
+	arrows(wyrs, obsMW + wsig*obsMW, wyrs, obsMW - wsig*obsMW, code=3, angle=90, length=0.04, lwd=1.5)
 	lines(A$yr, A$annual_mean_wt[1:length(A$yr)], col="red", lwd=2)
 	if (!simplify){
-		legend("bottomleft", legend=c("Observed (+/- CV)","Predicted"), lty=c(0,1), lwd=c(0,2), pch=c(20, NA_integer_), col=c(1,"red"), bty="n", cex=1.2, inset=0.025)
+		legend("bottomleft", legend=c("Observed (+/- CV)","Predicted"), lty=c(0,1), lwd=c(0,2), pch=c(19, NA_integer_), col=c(1,"red"), bty="n", cex=1.2, inset=0.025)
 		addScenLab(0.95, ifelse(simplify,0.9,0.95), adj=c(1,0))
 	}
 	if (simplify && par()$mfg[1]==1 && par()$mfg[2]==1){
-		legend("bottomleft", legend=c("Obs. (+/- CV)","Pred."), lty=c(0,1), lwd=c(0,2), pch=c(20, NA_integer_), col=c(1,"red"), bty="n", cex=0.9, inset=0.025)
-		#addScenLab(0.95, ifelse(simplify,0.9,0.95), adj=c(1,0))
+		legend("bottomleft", legend=c("Obs. (+/- CV)","Pred."), lty=c(0,1), lwd=c(0,2), pch=c(19, NA_integer_), col=c(1,"red"), bty="n", cex=0.9, inset=0.025)
 	}
-	saveFig("fig.annual.mean.weight")
+	saveFig("fig.annual.mean.weight", fun.call=match.call())
 }
 
 fig.catchFit <- function() {
 	on.exit(expandGraph(mfrow=c(1,1),new=FALSE))
 	crows = (1:nrow(A$obs_ct))[!apply(A$obs_ct,1,function(x){all(x==0)})]
-	par(mfrow=c(1,1), mai=c(0.75,0.75,0.3,0.2), omi=c(0.1,0.1,0.1,0.1), mgp=c(2.5,.5,0))
-	plot(A$yr,A$ct[1,],type="n", xlab="Year", ylab="Catch (t)", ylim=c(0,1.5*max(A$obs_ct,A$ct)), xlim=c(A$yr[1],A$yr[length(A$yr)]),main="Catch", las=1)
+	par(mfrow=c(1,1), mar=c(3,5,2,0.5), oma=c(0,0,0,0), mgp=c(2,0.5,0))
+	plot(A$yr, A$ct[1,], type="n", xlab="Year", ylab="", ylim=c(0,1.1*max(A$obs_ct,A$ct)), xlim=c(A$yr[1],A$yr[length(A$yr)]), main="Catch", las=1, cex.axis=1.2, cex.lab=1.5, cex.main=1.75)
+	mtext("Catch (tonnes)", side=2, line=3.5, cex=1.5)
+	axis(1, at=seq(1975,2015,10), tcl=-0.25, labels=FALSE)
 	for (i in crows) {
 		points(A$yr,A$obs_ct[i,],pch=16,cex=1,col="red")
 		lines(A$yr,A$ct[i,], col="dodgerblue", lwd=2)
@@ -105,7 +116,7 @@ fig.catchFit <- function() {
 	}
 	addLegend(0.05,0.95, pch=c(16,1), col=c("red","dodgerblue"), lty=c(0,1), legend=c("Observed","Fitted"), bty="n", cex=1.2)
 	addScenLab(0.95, 0.95, adj=c(1,0))
-	saveFig("fig.catch.fit")
+	saveFig("fig.catch.fit", fun.call=match.call())
 }
 
 fig.survey.age.residuals1 <- function(){
@@ -337,7 +348,7 @@ fig.surveybiomass.fit <- function(n=NULL)
 			addScenLab(adj=c(0,0.5),cex=1.2)
 		}
 	}
-	saveFig("fig.survey.biomass.fit")
+	saveFig("fig.survey.biomass.fit", fun.call=match.call())
 }
 
 fig.selectivity <- function(){
@@ -1242,26 +1253,21 @@ fig.Allcontrol.pts.Box <- function(tac.use=0, useHRP=FALSE, minYr, aveYr) ## WAP
 	mcnames = names(ddmcmc)
 
 	if (useHRP) {
-		##********** change to using calcHRP() eventually
-		btmcmc  = A$mc.sbt[,1:nyear]
-		ftmcmc  = A$mc.ft[,1:nyear]
-		post.bt = as.data.frame(window(mcmc(btmcmc),start=Burn+1,thin=Thin))
-		post.ft = as.data.frame(window(mcmc(ftmcmc),start=Burn+1,thin=Thin))
-		post.dt = t(apply(post.bt,1,function(x){x/mean(x[match(aveYr,yr)])}))
-		ddmpd   = A$mpdproj
-
 		unpackList(renderVals(minYr=minYr, aveYr=aveYr))
+		## changed to use calcHRP() -- standardisng
+		HRPs = calcHRP(A, aveYr, minYr, Burn)
+
 #browser();return()
-		ctls.hrp = list()
-		dmcmc[,"Bmin"]  = apply(post.bt[,match(minYr,yr),drop=FALSE],1,min)
-		dmcmc[,"2Bmin"] = 2 * dmcmc[,"Bmin"]
-		dmcmc[,"Bavg"] = apply(post.bt[,match(aveYr,yr),drop=FALSE],1,mean)
-		dmcmc[,"Favg"] = apply(post.ft[,match(aveYr,yr),drop=FALSE],1,mean)
-		dmcmc[,"Fmin"] = apply(post.ft[,match(minYr,yr),drop=FALSE],1,min)
-		dmcmc[,"Fmax"] = apply(post.ft,1,function(x){max(x)})                     ## 1000 maxima over N years
-		#ctls.hrp[["Davg"]] = apply(post.dt[,match(aveYr,yr),drop=FALSE],1,mean)  ## all values = 1
+		#ctls.hrp = list()
+		dmcmc[,"Bmin"]  = HRPs$bLRPs      #apply(post.bt[,match(minYr,yr),drop=FALSE],1,min)
+		dmcmc[,"2Bmin"] = HRPs$bUSRs      #2 * dmcmc[,"Bmin"]
+		dmcmc[,"Bavg"]  = HRPs$post.abt   #apply(post.bt[,match(aveYr,yr),drop=FALSE],1,mean)
+		dmcmc[,"Favg"]  = HRPs$post.aft   #apply(post.ft[,match(aveYr,yr),drop=FALSE],1,mean)
+		#dmcmc[,"Fmin"]  = apply(post.ft[,match(minYr,yr),drop=FALSE],1,min)
+		dmcmc[,"Fmin"]  = apply(t(t(1:length(HRPs$minYrs))),1,function(i){HRPs$post.ft[i,as.character(HRPs$minYrs[i])]})  ## F in years of Bmin
+		dmcmc[,"Fmax"]  = HRPs$post.maxft #apply(post.ft,1,function(x){max(x)})                     ## 1000 maxima over N years
 		mcnames = names(dmcmc)
-		nmB = c(paste0("B",A$currYr+c(0,3)), "Bavg", "Bmin", "2Bmin")
+		nmB = c(paste0("B",A$currYr+c(0,Nproj)), "Bavg", "Bmin", "2Bmin")
 		Bctl = match(nmB,mcnames)
 		nmF = c(paste0("F",A$currYr+c(-1)), "Favg", "Fmin", "Fmax")
 		Fctl = match(nmF,mcnames)
@@ -1271,7 +1277,7 @@ fig.Allcontrol.pts.Box <- function(tac.use=0, useHRP=FALSE, minYr, aveYr) ## WAP
 		dmcmc[,"FMSY80"] = dmcmc[,match("FMSY",mcnames)]*0.80
 		dmcmc[,"FMSY40"] = dmcmc[,match("FMSY",mcnames)]*0.40
 		mcnames = names(dmcmc)
-		nmB = c(paste0("B",A$currYr+c(0,3)),paste0("BMSY",c("","80","40")),paste0("B0",c("","40","20")))
+		nmB = c(paste0("B",A$currYr+c(0,Nproj)),paste0("BMSY",c("","80","40")),paste0("B0",c("","40","20")))
 		Bctl = match(nmB,mcnames)
 		nmF = c(paste0("F",A$currYr+c(-1)),paste0("FMSY",c("","80","40")))
 		Fctl = match(nmF,mcnames)
@@ -1293,9 +1299,9 @@ fig.Allcontrol.pts.Box <- function(tac.use=0, useHRP=FALSE, minYr, aveYr) ## WAP
 			if(simplify || sideways) {
 				if(par()$mfg[1]==par()$mfg[3]){
 					if (useHRP)
-						Blab = paste0("expression(", paste0(c(rep("",4), "2*"), paste0("italic(B)", c(paste0("[",A$currYr,"]"), paste0("[",A$currYr+3,"]"), rep("[avg]",1), rep(paste0("[",minYr,"]"),2)) ) ), ")")
+						Blab = paste0("expression(", paste0(c(rep("",4), "2*"), paste0("italic(B)", c(paste0("[",A$currYr,"]"), paste0("[",A$currYr + Nproj,"]"), rep("[avg]",1), rep(paste0("[min]"),2)) ) ), ")")
 					else
-						Blab = paste0("expression(", paste0(c(rep("",3), "0.8~", "0.4~", "", "0.4~", "0.2~"), paste0("italic(B)", c(paste0("[",A$currYr,"]"), paste0("[",A$currYr+3,"]"), rep("[MSY]",3), rep("[0]",3)))), ")")
+						Blab = paste0("expression(", paste0(c(rep("",3), "0.8~", "0.4~", "", "0.4~", "0.2~"), paste0("italic(B)", c(paste0("[",A$currYr,"]"), paste0("[",A$currYr + Nproj,"]"), rep("[MSY]",3), rep("[0]",3)))), ")")
 					for (l in 1:length(Blab))
 						eval(parse(text=paste0("axis(1,at=",l,",",Blab[l],",las=2,cex.axis=1.5,padj=0.3)")))
 				}
@@ -1312,7 +1318,7 @@ fig.Allcontrol.pts.Box <- function(tac.use=0, useHRP=FALSE, minYr, aveYr) ## WAP
 			if(simplify || sideways) {
 				if(par()$mfg[1]==par()$mfg[3]){
 					if (useHRP)
-						Flab = paste0("expression(", paste0(c(rep("",3)), paste0("italic(F)", c(paste0("[",A$currYr-1,"]"), "[avg]", paste0("[",minYr,"]"), "[max]") ) ), ")")
+						Flab = paste0("expression(", paste0(c(rep("",3)), paste0("italic(F)", c(paste0("[",A$currYr-1,"]"), "[avg]", "[min]", "[max]") ) ), ")")
 					else
 						Flab = paste0("expression(", paste0(c(rep("",2), "0.8~", "0.4~"), paste0("italic(F)", c(paste0("[",A$currYr-1,"]"), rep("[MSY]",3)))), ")")
 					for (l in 1:length(Flab))
@@ -1323,7 +1329,7 @@ fig.Allcontrol.pts.Box <- function(tac.use=0, useHRP=FALSE, minYr, aveYr) ## WAP
 			}
 		}
 	}
-	if(!simplify) saveFig("fig.ctlpt.box")
+	if(!simplify) saveFig("fig.ctlpt.box", fun.call=match.call())
 }
 
 ### MSY-BASED CONTROL POINTS
@@ -1385,23 +1391,26 @@ fig.Histcontrol.pts <- function(minYr, aveYr)
 
 	unpackList(renderVals(minYr=minYr, aveYr=aveYr))
 	ctls.hrp = list()
-#browser(); return()
 	ctls.hrp[["Bmin"]] = apply(post.bt[,match(minYr,yr),drop=FALSE],1,min)
 	ctls.hrp[["Bavg"]] = apply(post.bt[,match(aveYr,yr),drop=FALSE],1,mean)
-	ctls.hrp[["Fmin"]] = apply(post.ft[,match(minYr,yr),drop=FALSE],1,min)
+	ctls.hrp[["Fmax"]] = apply(post.ft,1,max)
 	ctls.hrp[["Favg"]] = apply(post.ft[,match(aveYr,yr),drop=FALSE],1,mean)
 	#ctls.hrp[["Davg"]] = apply(post.dt[,match(aveYr,yr),drop=FALSE],1,mean)  ## all values = 1
 	ctlpts = match(names(ctls.hrp), names(ctls.hrp))
 	mmY =  median(minYr) ## median year of minimum biomass
 
 
-	colours= c("green4","blue","red","gold")
+	#colours = c("green4","blue","red","gold")
+	colours = .colBlind[c("bluegreen","blue","vermillion","yellow")]
+
 	rc = .findSquare(length(ctlpts))
 	par(mfrow=rc, mar=c(3,3,2,1), mgp=c(3.2,0.5,0))
 
 	for(i in ctlpts) {
 		ii = names(ctls.hrp)[i]
-		iexp  = sub("D","italic(B[.(mmY)]/B)", sub("F","italic(F)", sub("B","italic(B)", sub("avg","[avg]", sub("min","[min]",ii)))))
+		iexp  = sub("D","italic(B[.(mmY)]/B)", sub("F","italic(F)", sub("B","italic(B)", sub("avg","[avg]", sub("min","[min]", sub("max","[max]",ii))))))
+#if (i==3) {browser(); return()}
+
 		iii = grep(i,ctlpts)
 		#colour = colour+1
 		colour = colours[iii]
@@ -1566,7 +1575,7 @@ fig.spr.vs.management.target <- function(){
 	if (is.null(spr)) {
 		cat("WARNING (fig.spr.vs.management.target): No spawner-per-recruit data available\n"); return(invisible("No SPR data")) }
 	post.spr <- as.data.frame(window(mcmc(spr),start=Burn+1,thin=thin))
-	sprci <- apply(post.spr,2,quantile,probs=c(0.025,0.5,0.975))
+	sprci <- apply(post.spr,2,quantile,probs=quants3)
 	matplot(A$yr,t(sprci),type="l",col=c(2,1,2),lty=c(3,1,3), lwd=2, pch=c(-1, 0, 1),ylim=c(0,max(sprci))
 		,xlab="Year",ylab="SPR")
 	abline(h=1)
@@ -1860,7 +1869,7 @@ plotChains=function (mcmc, nchains=3, pdisc=0,
    cex.main=1.2, cex.lab=1, cex.strip=0.8, cex.axis=0.8, las=0, 
    tck=0.5, tick.number=5, lty.trace=1, lwd.trace=1, col.trace="grey", 
    lty.median=1, lwd.median=1, col.median="black", lty.quant=2, lwd.quant=1, 
-   col.quant="black", plot=TRUE, probs=c(0.025, 0.5, 0.975), ...)  # AME probs
+   col.quant="black", plot=TRUE, probs=quants3, ...)  # AME probs
 {
 	on.exit(expandGraph(mfrow=c(1,1),new=FALSE))
 	if (!isScenMcmc()) {
@@ -1943,3 +1952,135 @@ plotChains=function (mcmc, nchains=3, pdisc=0,
 }
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~plotChains
 
+
+## fig.Fdensity-------------------------2017-12-11
+## Developed for the WAP RPR meeting (RH Nov 2017)
+## Originally needed to run the Sweave (AppF_Results_WAP_NS_2017_RD.Rnw) before executing the code below. (RH 171122)
+## Now modified to be used in the GUI (RH 171211)
+##----------------------------------------------RH
+fig.Fdensity <- function(scenario, opList, cribtab, sensfld="ssrd",
+  prefix="fig.F.", type="box", singles=TRUE, pngres=400, png=FALSE,
+  fcol = c("blue","greenyellow","red3"))
+{
+	## This function takes the output from ADMB projections and plots the distribution of alternative control points
+	## Control points are benchmark variables that do not change with tac
+	## The mcmc data files has nrow =ntac x nctlpts only take the first tac level (tac=0) 
+	## as these control points are insensitive to future tac (all based on historical catch/biomass/F)
+	on.exit(expandGraph(mfrow=c(1,1),new=FALSE))
+
+	#fcol  = .colBlind[c("blue","yellow","redpurple")]
+	#fcol  = c("blue","greenyellow","firebrick2")
+	if (missing(scenario)) scenario = NULL
+	Nsens = length(scenario)
+	if (Nsens==1 && !isScenMcmc()) {
+		cat("WARNING (fig.Fdensity): No MCMCs generated for this scenario\n"); return(invisible("No MCMC data")) }
+	Ft.diags = Ft.max = list()
+	if (is.null(scenario)){
+		cribtab = cribtab[!is.na(cribtab[,sensfld]),]
+		cribtab = cribtab[order(cribtab[,sensfld]),]
+		scenario = cribtab$run
+		Nsens = length(scenario)
+	}
+	isOne = Nsens==1
+	rc = .findSquare(Nsens)
+	filename = paste0(prefix,"png")
+
+#browser();return()
+	if (png && !singles)
+		png(filename, width=8, height=8, units="in", res=pngres)
+	if (!singles)
+		par(mfrow=rc, mar=c(0,0,0,0), oma=c(3,3.5,0.5,0.5), mgp=c(2,0.5,0))
+	ns = 0
+
+	for (s in scenario) {
+		ns = ns + 1
+		zs  = is.element(cribtab$run,s)
+		if (is.na(cribtab[,sensfld][zs])) next
+		ss =  rownames(cribtab)[zs]
+		A   = opList[[s]][[4]]
+		leg = paste0(paste0(c("S","R"),pad0(cribtab[zs,c(sensfld,"run")],2)),collapse="-")
+		leg = paste0(leg, ": ", cribtab[zs,"label"],collapse="")
+		leg = gsub("\\+OSvB","",leg)
+		if (is.null(A$mc.ft)) next
+		filename = paste0(prefix,leg,".png")
+		dmcft    = mcmc2(A$mc.ft,Burn+1)
+		colnames(dmcft) = A$yr
+		gather = c(S=cribtab[,sensfld][zs], R=s)
+		gather = c(gather, NbigFmed.year = sum(apply(dmcft,2,median)>2))  ## Number of years when annual median F > 2
+		gather = c(gather, NbigFmax.year = sum(apply(dmcft,2,max)>2))     ## Number of years when annual maximum F > 2
+		#gather = c(gather, medFmax.mcmc  = median(apply(dmcft,1,max)))    ## Median of the maximum F values in each MCMC sample (1000 samples)
+		tranft = as.data.frame(t(dmcft)); colnames(tranft) = NULL
+		Fmax   = sapply(tranft, function(x,i){ xmax=max(x); zmax=match(xmax,x); imax=i[zmax]; names(xmax)=imax; return(xmax)}, i=colnames(dmcft))
+		gather = c(gather, medFmax.mcmc  = median(Fmax))                  ## Median of the maximum Ft values in each MCMC sample (1000 samples)
+		#gather = c(gather, yrsFmax.mcmc  = as.numeric(names(Fmax)))       ## Years when each MCMC Ft reached a maximum
+		gather = c(gather, medFmax.year  = median(apply(dmcft,2,max)))    ## Median of the 50 annual maximum F values
+		gather = c(gather, maxFmed.year  = max(apply(dmcft,2,median)))    ## Maxumum of the 50 annual median F values
+		gather = c(gather, P.Fgt2        = sum(dmcft>2)/prod(dim(dmcft))) ## Probability that F>2 in the entire F matrix (mcmc x year)
+		gather = c(gather, yr.max.Fmed   = as.numeric(colnames(dmcft)[match(max(apply(dmcft,2,median)),apply(dmcft,2,median))])) ## Year with the maximum median F
+		Ft.diags[[ss]] = gather
+		Ft.max[[ss]] = Fmax #as.numeric(names(Fmax))
+#browser();return()
+		#Ft.quants[[ss]] = quantile(apply(dmcft,1,max),c(0.05,0.50,0.95))
+		#leg = paste0(leg,"\nFmax= ",signif(gather["medFmax.mcmc"],2))
+		#leg = paste0(leg, "\nM=", cribtab[zs,"M"], ", k=", cribtab[zs,"k"])
+
+		if (!is.null(type)) {
+			if (png && singles)
+				png(filename, width=7, height=5, units="in", res=pngres)
+			if (singles || isOne)
+				par(mfrow=c(1,1), mar=c(3,3.5,0.5,0.5), oma=c(0,0,0,0), mgp=c(2,0.5,0))
+			if (type=="chain") {
+				plot(0,xlim=c(1967,2016),ylim=c(0,20),type="n",xlab="Year",ylab="Fishing mortality",cex.axis=1.2,cex.lab=1.5,las=1)
+				axis(1, at=seq(1965,2015,5), tcl=-0.25, labels=F)
+				axis(2, at=1:20, tcl=-0.25, labels=F)
+				#apply(dmcft,1,function(x){lines(1967:2016,x,col=lucent("blue",0.05))}) ## seems slow but the 3rd following line is also slow
+				Fvec = as.vector(t(cbind(dmcft,brk=rep(NA,nrow(dmcft)))))
+				Yvec = rep(c(1967:2016,NA),nrow(dmcft))
+				lines(Yvec,Fvec,col=lucent(fcol[1],0.05))
+			} else if (type=="box") {
+				if (Nsens==1) ymax = max(c(apply(dmcft,2,quantile,quants5[5]), quantile(Ft.max[[ss]],quants5[5]))) * 1.075 else ymax = 21.5
+				if (singles) {
+					quantBox(dmcft, outline=F, ylim=c(0,ymax), xlab="Year",ylab="Fishing mortality", cex.axis=1.2, cex.lab=1.5, las=1, xaxt="n", medcol=fcol[1], boxcol="grey20", boxfill=lucent(fcol[2],0.75))
+				} else {
+					quantBox(dmcft, outline=F, ylim=c(0,ymax), xlab="Year",ylab=ifelse(singles,"Fishing mortality",""), cex.axis=1.2, cex.lab=1.5, las=1, xaxt="n", yaxt="n", medcol=fcol[1], boxcol="grey20", boxfill=lucent(fcol[2],0.75), whisklty=1, whiskcol="grey20")
+				}
+				xpos  = 1:length(A$yr)
+				smtik = is.element(A$yr,seq(1965,2015,5))
+				bgtik = is.element(A$yr,seq(1965,2015,10))
+				tfac  = ifelse(isOne,-1,0.8)
+				axis(1, at=xpos[smtik], tcl=tfac*0.25, labels=F)
+				axis(1, at=xpos[bgtik], tcl=tfac*0.5, labels=if(singles || ns %in% (Nsens:1)[1:3]) A$yr[bgtik] else FALSE, cex.axis=1.2)
+				axis(2, at=1:20, tcl=tfac*0.25, labels=F)
+				axis(2, at=seq(0,20,5),tcl=tfac*0.5, labels=if(singles || ns %in% seq(1,Nsens,rc[2])) seq(0,20,5) else FALSE, cex.axis=1.2, las=1)
+			}
+			#abline(h=gather["medFmax.mcmc"], col="grey20", lty=ifelse(type=="box",3,2))
+			Fnow = gather["medFmax.mcmc"]
+			abline(h=2, col="gainsboro", lty=ifelse(type=="box",2,2), lwd=1)
+			abline(h=Fnow, col=lucent(fcol[3],0.5), lty=ifelse(type=="box",1,2), lwd=1.5)
+			Fxfrq = table(names(Ft.max[[ss]]))
+			amp   = 0.05 * abs(diff(par()$usr[3:4]))
+			yfrq = Fxfrq * (amp/max(Fxfrq))
+			xfrq = match(names(Fxfrq),A$yr)
+			#segments(x0=xfrq, y0=Fnow-(yfrq/2), y1=Fnow+(yfrq/2), lwd=4, col=lucent(fcol[3],0.75))
+			segments(x0=par()$usr[2]-1, y0=quantile(Ft.max[[ss]],quants5[1]), y1=quantile(Ft.max[[ss]],quants5[5]), lwd=3, col=lucent(fcol[3],0.5))
+			symbols(xfrq, rep(Fnow,length(xfrq)), circles=sqrt(yfrq),add=T, inches=(0.5/rc[1])*max(Fxfrq)/sum(Fxfrq), fg=lucent(fcol[3],0.5), lwd=2)
+			text(ncol(dmcft)-2, Fnow, show0(round(Fnow,ifelse(Fnow<10,2,1)),ifelse(Fnow<10,2,1),add2int=T), col=fcol[3], pos=ifelse(Fnow>18,1,3), cex=1.2)
+			addLabel(0.04,ifelse(Nsens==1,0.975,0.95), txt=leg, cex=ifelse(singles,1.5,1.0), adj=c(0,1))
+			if (png && singles) dev.off()
+#{browser();return()}
+		}
+	}
+	if (!singles){
+		mtext("Year", side=1, outer=T, line=2, cex=1.2)
+		mtext("Fishing mortality rate", side=2, outer=T, line=2, cex=1.2)
+	}
+	if (png && !singles) dev.off()
+	Ft.out = as.data.frame(t(as.data.frame(Ft.diags)))
+	useTab1 = c("S", "R", "NbigFmed.year", "P.Fgt2", "medFmax.mcmc", "yr.max.Fmed")
+	write.csv(Ft.out[,useTab1],paste0(prefix,"csv"))
+#browser();return()
+	if (!usingSweave)
+		saveFig("fig.fishing.mortality.max", fun.call=match.call())
+	return(Ft.out[,useTab1])
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~fig.Fdensity
