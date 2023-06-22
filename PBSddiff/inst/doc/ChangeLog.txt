@@ -6,6 +6,14 @@ Authors : CG  = Chris Grandin
           RF  = Robyn Forrest
           SM  = Steve Martell
 
+1.3.1 (2023-06-22) [Rcheck=F Rbuild=F]
+  * R code
+    + Code remains a collection for direct sourcing during stock assessments.
+  * Documentation
+    + Added small Inroduction vignette. (RH 230622)
+    + Moved tpl and cpp files from folder `src' to `Ccode' under `docs'. (RH 230622)
+      - primarily so that Rdevcheck does not try to compile the code in future.
+
 1.3.0 (2018-01-04)
   * pcod_iscam.r
     + Latest changes made to this script file: (RH 171211)

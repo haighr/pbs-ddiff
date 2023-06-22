@@ -1,6 +1,6 @@
 Package:     PBSddiff
-Version:     1.3.0
-Date:        2018-01-04
+Version:     1.3.1
+Date:        2023-06-22
 Title:        GUI control for delay-difference output from iSCAM
 Authors@R: c(
    person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca"),
@@ -10,8 +10,8 @@ Authors@R: c(
    )
 Author: Rowan Haigh [aut, cre], Chris Grandin [aut], Paul J. Starr [ctb], Robyn E. Forrest [ctb]
 Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
-Copyright:   2015-2018, Fisheries and Oceans Canada
-Depends:     R (>= 2.15.0), MASS, KernSmooth, MCMCpack, coda, PBSmodelling, grDevices
+Copyright:   2015-2023, Fisheries and Oceans Canada
+Depends:     R (>= 3.5.0), PBSmodelling, MASS, KernSmooth, MCMCpack, coda, grDevices
 Imports:     methods
 Description: Provides R code for GUI control of 'iSCAM' delay-difference model 
              output for multiple scenarios. The code was originally created by 
